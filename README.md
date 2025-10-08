@@ -37,8 +37,10 @@ Este proyecto está diseñado para gestionar de forma eficiente el control de ve
 
 ---
 
-## 🚀 Instalación y uso
 
-1. Clona este repositorio:  
-   ```bash
+## 🚀 Clonar el repositorio
+
+Para obtener una copia del proyecto en tu máquina local, ejecuta el siguiente comando:
+
+```bash
 git clone https://github.com/Dark739devug/SistemadeFacturacion.git
