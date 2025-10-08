@@ -8,16 +8,15 @@ Este proyecto está diseñado para gestionar de forma eficiente el control de ve
 ## 🛠️ Tecnologías utilizadas
 
 ### 📂 Base de datos
-- Relacional **PostgreSQL / MySQL**
+- Relacional **PostgreSQL**
 
 ### 🔗 API
 - **Spring Boot**
-- **.NET**
 - **REST**
 
 ### 🎨 Frontend
 - **React**
-- **Angular**
+
 
 ### 🔒 Autenticación
 - **OAuth 2.0**
