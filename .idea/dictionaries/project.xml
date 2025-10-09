@@ -2,6 +2,9 @@
   <dictionary name="project">
     <words>
       <w>configuracion</w>
+      <w>datos</w>
+      <w>factur</w>
+      <w>servidor</w>
     </words>
   </dictionary>
 </component>
