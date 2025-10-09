@@ -53,4 +53,4 @@ Es **fundamental** que los siguientes componentes estén instalados y correctame
 Para obtener una copia del proyecto, ejecuta el siguiente comando:
 
 ```bash
-git clone [https://github.com/Dark739devug/SistemadeFacturacion.git](https://github.com/Dark739devug/SistemadeFacturacion.git)
+git clone [https://github.com/Dark739devug/SistemadeFacturacion.git]
