@@ -1,25 +1,364 @@
 
---creacion de la abse de datos
-create database DBFactur
---ahora par usarala
-use DBFactur 
+--- ============================================
+-- 🚀 BASE DE DATOS: sistema_facturacion_web
+-- ============================================
 
--- Crear tabla de usuarios
-CREATE TABLE Usuario (
+-- CREATE DATABASE sistema_facturacion_web;
+
+-- ============================================
+-- TABLAS PRINCIPALES
+-- ============================================
+
+CREATE TABLE roles (
+    id_rol SERIAL PRIMARY KEY,
+    nombre_rol VARCHAR(50) NOT NULL UNIQUE,
+    descripcion TEXT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE usuarios (
     id_usuario SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    nombre VARCHAR(200) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
-    fecha_nacimiento DATE NOT NULL,
-    nit VARCHAR(20) UNIQUE NOT NULL,
-    dpi VARCHAR(20) UNIQUE NOT NULL
+    email VARCHAR(150) UNIQUE,
+    id_rol INTEGER NOT NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (id_rol) REFERENCES roles(id_rol)
 );
 
--- Crear tabla de login
-CREATE TABLE Login (
-    id_login SERIAL PRIMARY KEY,
-    correo_electronico VARCHAR(150) UNIQUE NOT NULL,
-    contrasena VARCHAR(255) NOT NULL,
-    id_usuario INT NOT NULL,
-    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE CASCADE
+CREATE TABLE establecimientos (
+    id_establecimiento SERIAL PRIMARY KEY,
+    nit VARCHAR(20) NOT NULL UNIQUE,
+    nombre_comercial VARCHAR(200) NOT NULL,
+    razon_social VARCHAR(200) NOT NULL,
+    direccion TEXT NOT NULL,
+    municipio VARCHAR(100),
+    departamento VARCHAR(100),
+    codigo_postal VARCHAR(10),
+    telefono VARCHAR(20),
+    email VARCHAR(150),
+    codigo_establecimiento VARCHAR(10) UNIQUE,
+    activo_certificador BOOLEAN DEFAULT TRUE,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    activo BOOLEAN DEFAULT TRUE
 );
-select * from Usuario
+
+CREATE TABLE clientes (
+    id_cliente SERIAL PRIMARY KEY,
+    nit VARCHAR(20) NOT NULL,
+    razon_social VARCHAR(200) NOT NULL,
+    nombre_comercial VARCHAR(200),
+    direccion TEXT NOT NULL,
+    municipio VARCHAR(100),
+    departamento VARCHAR(100),
+    telefono VARCHAR(20),
+    email VARCHAR(150),
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    activo BOOLEAN DEFAULT TRUE,
+    CONSTRAINT unique_nit_cliente UNIQUE (nit)
+);
+
+CREATE TABLE categorias_productos (
+    id_categoria SERIAL PRIMARY KEY,
+    nombre_categoria VARCHAR(100) NOT NULL UNIQUE,
+    descripcion TEXT,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE productos (
+    id_producto SERIAL PRIMARY KEY,
+    codigo_producto VARCHAR(50) NOT NULL UNIQUE,
+    nombre_producto VARCHAR(200) NOT NULL,
+    descripcion TEXT,
+    id_categoria INTEGER,
+    id_establecimiento INTEGER,
+    precio_unitario NUMERIC(12, 2) NOT NULL CHECK (precio_unitario >= 0),
+    stock_actual INTEGER DEFAULT 0 CHECK (stock_actual >= 0),
+    unidad_medida VARCHAR(20) DEFAULT 'UNIDAD',
+    aplica_iva BOOLEAN DEFAULT TRUE,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    activo BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (id_categoria) REFERENCES categorias_productos(id_categoria),
+    FOREIGN KEY (id_establecimiento) REFERENCES establecimientos(id_establecimiento)
+);
+
+CREATE TABLE tipos_documento (
+    id_tipo_documento SERIAL PRIMARY KEY,
+    codigo_tipo VARCHAR(10) NOT NULL UNIQUE,
+    nombre_tipo VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE estados_factura (
+    id_estado SERIAL PRIMARY KEY,
+    codigo_estado VARCHAR(20) NOT NULL UNIQUE,
+    nombre_estado VARCHAR(50) NOT NULL,
+    descripcion TEXT
+);
+
+CREATE TABLE facturas (
+    id_factura SERIAL PRIMARY KEY,
+    numero_factura VARCHAR(50) UNIQUE,
+    serie VARCHAR(20),
+    correlativo INTEGER,
+    numero_autorizacion VARCHAR(100) UNIQUE,
+    id_establecimiento INTEGER NOT NULL,
+    id_cliente INTEGER NOT NULL,
+    id_tipo_documento INTEGER NOT NULL,
+    fecha_emision TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_certificacion TIMESTAMP,
+    subtotal NUMERIC(12, 2) NOT NULL CHECK (subtotal >= 0),
+    total_descuentos NUMERIC(12, 2) DEFAULT 0 CHECK (total_descuentos >= 0),
+    subtotal_con_descuento NUMERIC(12, 2) NOT NULL CHECK (subtotal_con_descuento >= 0),
+    total_iva NUMERIC(12, 2) NOT NULL CHECK (total_iva >= 0),
+    total_factura NUMERIC(12, 2) NOT NULL CHECK (total_factura >= 0),
+    id_estado INTEGER NOT NULL,
+    id_usuario_creacion INTEGER NOT NULL,
+    observaciones TEXT,
+    uuid_certificacion VARCHAR(100),
+    xml_certificado TEXT,
+    fecha_anulacion TIMESTAMP,
+    motivo_anulacion TEXT,
+    id_usuario_anulacion INTEGER,
+    FOREIGN KEY (id_establecimiento) REFERENCES establecimientos(id_establecimiento),
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
+    FOREIGN KEY (id_tipo_documento) REFERENCES tipos_documento(id_tipo_documento),
+    FOREIGN KEY (id_estado) REFERENCES estados_factura(id_estado),
+    FOREIGN KEY (id_usuario_creacion) REFERENCES usuarios(id_usuario),
+    FOREIGN KEY (id_usuario_anulacion) REFERENCES usuarios(id_usuario)
+);
+
+CREATE TABLE detalle_facturas (
+    id_detalle SERIAL PRIMARY KEY,
+    id_factura INTEGER NOT NULL,
+    numero_linea INTEGER NOT NULL,
+    id_producto INTEGER NOT NULL,
+    descripcion_producto VARCHAR(500) NOT NULL,
+    cantidad NUMERIC(10, 2) NOT NULL CHECK (cantidad > 0),
+    unidad_medida VARCHAR(20) NOT NULL,
+    precio_unitario NUMERIC(12, 2) NOT NULL CHECK (precio_unitario >= 0),
+    descuento NUMERIC(12, 2) DEFAULT 0 CHECK (descuento >= 0),
+    subtotal_linea NUMERIC(12, 2) NOT NULL CHECK (subtotal_linea >= 0),
+    aplica_iva BOOLEAN DEFAULT TRUE,
+    monto_iva NUMERIC(12, 2) DEFAULT 0 CHECK (monto_iva >= 0),
+    total_linea NUMERIC(12, 2) NOT NULL CHECK (total_linea >= 0),
+    FOREIGN KEY (id_factura) REFERENCES facturas(id_factura) ON DELETE CASCADE,
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
+    CONSTRAINT unique_linea_factura UNIQUE (id_factura, numero_linea)
+);
+
+CREATE TABLE bitacora_certificacion (
+    id_bitacora SERIAL PRIMARY KEY,
+    id_factura INTEGER NOT NULL,
+    fecha_intento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    exitoso BOOLEAN NOT NULL,
+    codigo_respuesta VARCHAR(20),
+    mensaje_respuesta TEXT,
+    datos_enviados JSONB,
+    datos_recibidos JSONB,
+    usuario_responsable INTEGER,
+    FOREIGN KEY (id_factura) REFERENCES facturas(id_factura),
+    FOREIGN KEY (usuario_responsable) REFERENCES usuarios(id_usuario)
+);
+
+CREATE TABLE configuracion_sistema (
+    id_configuracion SERIAL PRIMARY KEY,
+    clave VARCHAR(100) NOT NULL UNIQUE,
+    valor TEXT NOT NULL,
+    descripcion TEXT,
+    tipo_dato VARCHAR(20) DEFAULT 'STRING',
+    fecha_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE auditoria (
+    id_auditoria SERIAL PRIMARY KEY,
+    id_usuario INTEGER,
+    accion VARCHAR(100) NOT NULL,
+    tabla_afectada VARCHAR(100),
+    id_registro INTEGER,
+    datos_anteriores JSONB,
+    datos_nuevos JSONB,
+    ip_address VARCHAR(50),
+    fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
+
+-- ============================================
+-- ÍNDICES
+-- ============================================
+
+CREATE INDEX idx_usuarios_username ON usuarios(username);
+CREATE INDEX idx_usuarios_email ON usuarios(email);
+CREATE INDEX idx_usuarios_rol ON usuarios(id_rol);
+CREATE INDEX idx_clientes_nit ON clientes(nit);
+CREATE INDEX idx_clientes_razon_social ON clientes(razon_social);
+CREATE INDEX idx_productos_codigo ON productos(codigo_producto);
+CREATE INDEX idx_productos_categoria ON productos(id_categoria);
+CREATE INDEX idx_productos_activo ON productos(activo);
+CREATE INDEX idx_facturas_numero ON facturas(numero_factura);
+CREATE INDEX idx_facturas_estado ON facturas(id_estado);
+CREATE INDEX idx_facturas_fecha_emision ON facturas(fecha_emision);
+CREATE INDEX idx_bitacora_factura ON bitacora_certificacion(id_factura);
+CREATE INDEX idx_auditoria_usuario ON auditoria(id_usuario);
+
+-- ============================================
+-- DATOS INICIALES
+-- ============================================
+
+INSERT INTO roles (nombre_rol, descripcion) VALUES
+('Admin', 'Administrador del sistema con acceso completo'),
+('Facturación', 'Usuario de facturación con permisos limitados');
+
+INSERT INTO tipos_documento (codigo_tipo, nombre_tipo, descripcion) VALUES
+('FACT', 'Factura', 'Factura electrónica estándar'),
+('NCRE', 'Nota de Crédito', 'Nota de crédito electrónica'),
+('NDEB', 'Nota de Débito', 'Nota de débito electrónica');
+
+INSERT INTO estados_factura (codigo_estado, nombre_estado, descripcion) VALUES
+('BORRADOR', 'Borrador', 'Factura en proceso de creación'),
+('PENDIENTE', 'Pendiente Certificación', 'Factura pendiente de enviar a certificar'),
+('CERTIFICADA', 'Certificada', 'Factura certificada correctamente'),
+('ANULADA', 'Anulada', 'Factura anulada'),
+('ERROR', 'Error', 'Error en la certificación');
+
+INSERT INTO categorias_productos (nombre_categoria, descripcion) VALUES
+('Electrónicos', 'Productos electrónicos en general'),
+('Alimentos', 'Productos alimenticios'),
+('Limpieza', 'Artículos de limpieza'),
+('Papelería', 'Productos de oficina y papelería'),
+('Otros', 'Artículos varios');
+
+INSERT INTO configuracion_sistema (clave, valor, descripcion, tipo_dato) VALUES
+('URL_API_CERTIFICACION', 'http://localhost:3001/api/certificacion', 'URL de la API de certificación', 'STRING'),
+('TASA_IVA', '0.12', 'Tasa de IVA en Guatemala (12%)', 'DECIMAL'),
+('TIMEOUT_CERTIFICACION', '30', 'Timeout en segundos para certificación', 'INTEGER'),
+('EMPRESA_NOMBRE', 'Empresa de Inventario Guatemala', 'Nombre de la empresa', 'STRING'),
+('EMPRESA_NIT', '12345678-9', 'NIT de la empresa', 'STRING');
+
+-- ============================================
+-- FUNCIONES Y TRIGGERS
+-- ============================================
+
+CREATE OR REPLACE FUNCTION actualizar_stock_producto()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        UPDATE productos 
+        SET stock_actual = stock_actual - NEW.cantidad
+        WHERE id_producto = NEW.id_producto;
+    ELSIF TG_OP = 'DELETE' THEN
+        UPDATE productos 
+        SET stock_actual = stock_actual + OLD.cantidad
+        WHERE id_producto = OLD.id_producto;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_actualizar_stock
+AFTER INSERT OR DELETE ON detalle_facturas
+FOR EACH ROW
+EXECUTE FUNCTION actualizar_stock_producto();
+
+CREATE OR REPLACE FUNCTION generar_numero_factura()
+RETURNS TRIGGER AS $$
+DECLARE
+    ultimo_correlativo INTEGER;
+    nueva_serie VARCHAR(20);
+BEGIN
+    SELECT COALESCE(MAX(correlativo), 0) INTO ultimo_correlativo
+    FROM facturas
+    WHERE id_establecimiento = NEW.id_establecimiento
+    AND serie = TO_CHAR(CURRENT_DATE, 'YYYY');
+    nueva_serie := TO_CHAR(CURRENT_DATE, 'YYYY');
+    NEW.serie := nueva_serie;
+    NEW.correlativo := ultimo_correlativo + 1;
+    NEW.numero_factura := nueva_serie || '-' || LPAD(NEW.correlativo::TEXT, 8, '0');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_generar_numero_factura
+BEFORE INSERT ON facturas
+FOR EACH ROW
+WHEN (NEW.numero_factura IS NULL)
+EXECUTE FUNCTION generar_numero_factura();
+
+CREATE OR REPLACE FUNCTION registrar_auditoria()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        INSERT INTO auditoria (id_usuario, accion, tabla_afectada, id_registro, datos_nuevos)
+        VALUES (NEW.id_usuario_creacion, 'INSERT', TG_TABLE_NAME, NEW.id_factura, row_to_json(NEW));
+    ELSIF TG_OP = 'UPDATE' THEN
+        INSERT INTO auditoria (id_usuario, accion, tabla_afectada, id_registro, datos_anteriores, datos_nuevos)
+        VALUES (NEW.id_usuario_creacion, 'UPDATE', TG_TABLE_NAME, NEW.id_factura, row_to_json(OLD), row_to_json(NEW));
+    ELSIF TG_OP = 'DELETE' THEN
+        INSERT INTO auditoria (id_usuario, accion, tabla_afectada, id_registro, datos_anteriores)
+        VALUES (OLD.id_usuario_creacion, 'DELETE', TG_TABLE_NAME, OLD.id_factura, row_to_json(OLD));
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_auditoria_facturas
+AFTER INSERT OR UPDATE OR DELETE ON facturas
+FOR EACH ROW
+EXECUTE FUNCTION registrar_auditoria();
+
+-- ============================================
+-- VISTAS
+-- ============================================
+
+CREATE OR REPLACE VIEW vista_facturas_completas AS
+SELECT 
+    f.id_factura,
+    f.numero_factura,
+    f.serie,
+    f.correlativo,
+    f.numero_autorizacion,
+    f.fecha_emision,
+    f.fecha_certificacion,
+    e.nit AS establecimiento_nit,
+    e.nombre_comercial AS establecimiento_nombre,
+    c.nit AS cliente_nit,
+    c.razon_social AS cliente_razon_social,
+    c.direccion AS cliente_direccion,
+    td.nombre_tipo AS tipo_documento,
+    ef.nombre_estado AS estado,
+    f.subtotal,
+    f.total_descuentos,
+    f.total_iva,
+    f.total_factura,
+    (u.nombre || ' ' || u.apellido) AS usuario_creacion, -- ✅ corregido aquí
+    f.observaciones,
+    f.fecha_anulacion,
+    f.motivo_anulacion
+FROM facturas f
+INNER JOIN establecimientos e ON f.id_establecimiento = e.id_establecimiento
+INNER JOIN clientes c ON f.id_cliente = c.id_cliente
+INNER JOIN tipos_documento td ON f.id_tipo_documento = td.id_tipo_documento
+INNER JOIN estados_factura ef ON f.id_estado = ef.id_estado
+INNER JOIN usuarios u ON f.id_usuario_creacion = u.id_usuario;
+
+CREATE OR REPLACE VIEW vista_productos_catalogo AS
+SELECT 
+    p.id_producto,
+    p.codigo_producto,
+    p.nombre_producto,
+    p.descripcion,
+    c.nombre_categoria,
+    p.precio_unitario,
+    p.stock_actual,
+    p.unidad_medida,
+    p.aplica_iva,
+    p.activo
+FROM productos p
+LEFT JOIN categorias_productos c ON p.id_categoria = c.id_categoria;
+
+-- ============================================
+-- ✅ FIN DEL SCRIPT CORREGIDO
+-- ============================================
