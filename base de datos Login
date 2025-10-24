@@ -1,5 +1,5 @@
 
---- ============================================
+-- ============================================
 -- 🚀 BASE DE DATOS: sistema_facturacion_web
 -- ============================================
 
@@ -19,10 +19,9 @@ CREATE TABLE roles (
 
 CREATE TABLE usuarios (
     id_usuario SERIAL PRIMARY KEY,
-    username VARCHAR(100) NOT NULL UNIQUE,
     nombre VARCHAR(200) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
-    email VARCHAR(150) UNIQUE,
+    email VARCHAR(150) NOT NULL UNIQUE,
     id_rol INTEGER NOT NULL,
     activo BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (id_rol) REFERENCES roles(id_rol)
@@ -190,7 +189,6 @@ CREATE TABLE auditoria (
 -- ÍNDICES
 -- ============================================
 
-CREATE INDEX idx_usuarios_username ON usuarios(username);
 CREATE INDEX idx_usuarios_email ON usuarios(email);
 CREATE INDEX idx_usuarios_rol ON usuarios(id_rol);
 CREATE INDEX idx_clientes_nit ON clientes(nit);
@@ -333,7 +331,8 @@ SELECT
     f.total_descuentos,
     f.total_iva,
     f.total_factura,
-    (u.nombre || ' ' || u.apellido) AS usuario_creacion, -- ✅ corregido aquí
+    (u.nombre || ' ' || u.apellido) AS usuario_creacion,
+    u.email AS correo_usuario,
     f.observaciones,
     f.fecha_anulacion,
     f.motivo_anulacion
@@ -359,6 +358,4 @@ SELECT
 FROM productos p
 LEFT JOIN categorias_productos c ON p.id_categoria = c.id_categoria;
 
--- ============================================
--- ✅ FIN DEL SCRIPT CORREGIDO
--- ============================================
+
