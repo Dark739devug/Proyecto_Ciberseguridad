@@ -1,6 +1,9 @@
-package com.facturacion.backend.dto.request;
+package com.facturacion.backend.dto.response;
 
-public class ClienteRequest {
+import java.time.LocalDateTime;
+
+public class ClienteResponse {
+    private Long idCliente;
     private String nit;
     private String razonSocial;
     private String nombreComercial;
@@ -9,11 +12,16 @@ public class ClienteRequest {
     private String departamento;
     private String telefono;
     private String email;
+    private LocalDateTime fechaRegistro;
+    private Boolean activo;
 
     // Constructor vacío
-    public ClienteRequest() {}
+    public ClienteResponse() {}
 
     // Getters y Setters
+    public Long getIdCliente() { return idCliente; }
+    public void setIdCliente(Long idCliente) { this.idCliente = idCliente; }
+
     public String getNit() { return nit; }
     public void setNit(String nit) { this.nit = nit; }
 
@@ -37,4 +45,10 @@ public class ClienteRequest {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public LocalDateTime getFechaRegistro() { return fechaRegistro; }
+    public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
+
+    public Boolean getActivo() { return activo; }
+    public void setActivo(Boolean activo) { this.activo = activo; }
 }

@@ -8,19 +8,7 @@ public class UsuarioResponse {
     private String nombreRol;
     private Boolean activo;
 
-    // Constructor vacío
     public UsuarioResponse() {}
-
-    // Constructor completo
-    public UsuarioResponse(Long idUsuario, String nombre, String apellido,
-                           String email, String nombreRol, Boolean activo) {
-        this.idUsuario = idUsuario;
-        this.nombre = nombre;
-        this.apellido = apellido;
-        this.email = email;
-        this.nombreRol = nombreRol;
-        this.activo = activo;
-    }
 
     // Getters y Setters
     public Long getIdUsuario() { return idUsuario; }

@@ -1,12 +1,16 @@
 package com.facturacion.backend.controllers;
 
+import com.facturacion.backend.dto.request.EstablecimientoRequest;
+import com.facturacion.backend.dto.response.EstablecimientoResponse;
+import com.facturacion.backend.mapper.EstablecimientoMapper;
 import com.facturacion.backend.models.Establecimiento;
-import com.facturacion.backend.repositories.EstablecimientoRepository;
+import com.facturacion.backend.services.EstablecimientoService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+
 import java.util.List;
 
 @RestController
@@ -14,48 +18,64 @@ import java.util.List;
 @SecurityRequirement(name = "bearerAuth")
 public class EstablecimientoController {
 
-    @Autowired
-    private EstablecimientoRepository establecimientoRepository;
+    private final EstablecimientoService establecimientoService;
+    private final EstablecimientoMapper establecimientoMapper;
+
+    public EstablecimientoController(EstablecimientoService establecimientoService,
+                                     EstablecimientoMapper establecimientoMapper) {
+        this.establecimientoService = establecimientoService;
+        this.establecimientoMapper = establecimientoMapper;
+    }
 
     @GetMapping
-    public List<Establecimiento> listarTodos() {
-        return establecimientoRepository.findAll();
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
+    public ResponseEntity<List<EstablecimientoResponse>> obtenerTodos() {
+        List<Establecimiento> establecimientos = establecimientoService.obtenerTodos();
+        return ResponseEntity.ok(establecimientoMapper.toResponseList(establecimientos));
+    }
+
+    @GetMapping("/activos")
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
+    public ResponseEntity<List<EstablecimientoResponse>> obtenerActivos() {
+        List<Establecimiento> establecimientos = establecimientoService.obtenerActivos();
+        return ResponseEntity.ok(establecimientoMapper.toResponseList(establecimientos));
     }
 
     @GetMapping("/{id}")
-    public Establecimiento obtenerPorId(@PathVariable Long id) {
-        return establecimientoRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Establecimiento no encontrado"
-                ));
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
+    public ResponseEntity<EstablecimientoResponse> obtenerPorId(@PathVariable Long id) {
+        Establecimiento establecimiento = establecimientoService.obtenerPorId(id);
+        return ResponseEntity.ok(establecimientoMapper.toResponse(establecimiento));
     }
 
     @GetMapping("/nit/{nit}")
-    public Establecimiento obtenerPorNit(@PathVariable String nit) {
-        return establecimientoRepository.findByNit(nit)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Establecimiento no encontrado"
-                ));
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
+    public ResponseEntity<EstablecimientoResponse> obtenerPorNit(@PathVariable String nit) {
+        Establecimiento establecimiento = establecimientoService.obtenerPorNit(nit);
+        return ResponseEntity.ok(establecimientoMapper.toResponse(establecimiento));
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Establecimiento crear(@RequestBody Establecimiento establecimiento) {
-        return establecimientoRepository.save(establecimiento);
+    @PreAuthorize("hasAuthority('Admin')")
+    public ResponseEntity<EstablecimientoResponse> crear(@RequestBody EstablecimientoRequest request) {
+        Establecimiento establecimiento = establecimientoMapper.toEntity(request);
+        Establecimiento establecimientoCreado = establecimientoService.crear(establecimiento);
+        return ResponseEntity.status(HttpStatus.CREATED).body(establecimientoMapper.toResponse(establecimientoCreado));
     }
 
     @PutMapping("/{id}")
-    public Establecimiento actualizar(@PathVariable Long id, @RequestBody Establecimiento establecimiento) {
-        if (!establecimientoRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Establecimiento no encontrado");
-        }
-        establecimiento.setIdEstablecimiento(id);
-        return establecimientoRepository.save(establecimiento);
+    @PreAuthorize("hasAuthority('Admin')")
+    public ResponseEntity<EstablecimientoResponse> actualizar(@PathVariable Long id, @RequestBody EstablecimientoRequest request) {
+        Establecimiento establecimiento = establecimientoService.obtenerPorId(id);
+        establecimientoMapper.updateEntity(request, establecimiento);
+        Establecimiento establecimientoActualizado = establecimientoService.actualizar(id, establecimiento);
+        return ResponseEntity.ok(establecimientoMapper.toResponse(establecimientoActualizado));
     }
 
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminar(@PathVariable Long id) {
-        establecimientoRepository.deleteById(id);
+    @PatchMapping("/{id}/desactivar")
+    @PreAuthorize("hasAuthority('Admin')")
+    public ResponseEntity<?> desactivar(@PathVariable Long id) {
+        establecimientoService.desactivar(id);
+        return ResponseEntity.ok().body("Establecimiento desactivado exitosamente");
     }
 }

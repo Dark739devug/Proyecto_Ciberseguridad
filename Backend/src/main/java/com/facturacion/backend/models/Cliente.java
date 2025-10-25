@@ -1,3 +1,4 @@
+// ========== Cliente.java ==========
 package com.facturacion.backend.models;
 
 import jakarta.persistence.*;
@@ -16,7 +17,7 @@ public class Cliente {
     @Column(name = "id_cliente")
     private Long idCliente;
 
-    @Column(name = "nit", nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     private String nit;
 
     @Column(name = "razon_social", nullable = false, length = 200)
@@ -25,31 +26,29 @@ public class Cliente {
     @Column(name = "nombre_comercial", length = 200)
     private String nombreComercial;
 
-    @Column(name = "direccion", nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String direccion;
 
-    @Column(name = "municipio", length = 100)
+    @Column(length = 100)
     private String municipio;
 
-    @Column(name = "departamento", length = 100)
+    @Column(length = 100)
     private String departamento;
 
-    @Column(name = "telefono", length = 20)
+    @Column(length = 20)
     private String telefono;
 
-    @Column(name = "email", length = 150)
+    @Column(length = 150)
     private String email;
 
-    @Column(name = "fecha_registro", updatable = false)
+    @Column(name = "fecha_registro", nullable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 
-    @Column(name = "activo")
+    @Column(nullable = false)
     private Boolean activo = true;
 
     @PrePersist
     protected void onCreate() {
-        if (fechaRegistro == null) {
-            fechaRegistro = LocalDateTime.now();
-        }
+        fechaRegistro = LocalDateTime.now();
     }
 }

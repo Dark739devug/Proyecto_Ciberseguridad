@@ -18,9 +18,9 @@ public class CategoriaProducto {
     @Column(name = "nombre_categoria", nullable = false, unique = true, length = 100)
     private String nombreCategoria;
 
-    @Column(name = "descripcion")
+    @Column(columnDefinition = "TEXT")
     private String descripcion;
 
-    @Column(name = "activo")
+    @Column(nullable = false)
     private Boolean activo = true;
 }

@@ -16,7 +16,7 @@ public class Login {
     @Column(name = "id_login")
     private Long idLogin;
 
-    @Column(name = "email", nullable = false, unique = true, length = 150)
+    @Column(nullable = false, unique = true, length = 150)
     private String email;
 
     @Column(name = "password_hash", nullable = false, length = 255)
@@ -25,8 +25,8 @@ public class Login {
     @Column(name = "ultimo_login")
     private LocalDateTime ultimoLogin;
 
-    @Column(name = "fecha_creacion", updatable = false)
-    private LocalDateTime fechaCreacion;
+    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    private LocalDateTime fechaCreacion = LocalDateTime.now();
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false, unique = true)
@@ -34,8 +34,6 @@ public class Login {
 
     @PrePersist
     protected void onCreate() {
-        if (fechaCreacion == null) {
-            fechaCreacion = LocalDateTime.now();
-        }
+        fechaCreacion = LocalDateTime.now();
     }
 }

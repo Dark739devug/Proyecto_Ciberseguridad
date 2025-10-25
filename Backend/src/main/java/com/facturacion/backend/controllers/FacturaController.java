@@ -8,6 +8,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -42,12 +43,12 @@ public class FacturaController {
 
     @GetMapping("/estado/{idEstado}")
     public List<Factura> listarPorEstado(@PathVariable Long idEstado) {
-        return facturaRepository.findByEstadoIdEstado(idEstado);
+        return facturaRepository.findByEstado_IdEstado(idEstado);
     }
 
     @GetMapping("/cliente/{idCliente}")
     public List<Factura> listarPorCliente(@PathVariable Long idCliente) {
-        return facturaRepository.findByClienteIdCliente(idCliente);
+        return facturaRepository.findByCliente_IdCliente(idCliente);
     }
 
     @GetMapping("/rango-fechas")
@@ -75,6 +76,9 @@ public class FacturaController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@PathVariable Long id) {
+        if (!facturaRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Factura no encontrada");
+        }
         facturaRepository.deleteById(id);
     }
 }

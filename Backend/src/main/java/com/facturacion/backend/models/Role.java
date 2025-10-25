@@ -19,13 +19,13 @@ public class Role {
     @Column(name = "nombre_rol", nullable = false, unique = true, length = 50)
     private String nombreRol;
 
-    @Column(name = "descripcion")
+    @Column(columnDefinition = "TEXT")
     private String descripcion;
 
     @Column(name = "fecha_creacion", updatable = false)
     private LocalDateTime fechaCreacion;
 
-    @Column(name = "activo")
+    @Column(nullable = false)
     private Boolean activo = true;
 
     @PrePersist

@@ -1,12 +1,16 @@
 package com.facturacion.backend.controllers;
 
+import com.facturacion.backend.dto.request.CategoriaProductoRequest;
+import com.facturacion.backend.dto.response.CategoriaProductoResponse;
+import com.facturacion.backend.mapper.CategoriaProductoMapper;
 import com.facturacion.backend.models.CategoriaProducto;
-import com.facturacion.backend.repositories.CategoriaProductoRepository;
+import com.facturacion.backend.services.CategoriaProductoService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+
 import java.util.List;
 
 @RestController
@@ -14,41 +18,57 @@ import java.util.List;
 @SecurityRequirement(name = "bearerAuth")
 public class CategoriaProductoController {
 
-    @Autowired
-    private CategoriaProductoRepository categoriaRepository;
+    private final CategoriaProductoService categoriaService;
+    private final CategoriaProductoMapper categoriaMapper;
+
+    public CategoriaProductoController(CategoriaProductoService categoriaService,
+                                       CategoriaProductoMapper categoriaMapper) {
+        this.categoriaService = categoriaService;
+        this.categoriaMapper = categoriaMapper;
+    }
 
     @GetMapping
-    public List<CategoriaProducto> listarTodas() {
-        return categoriaRepository.findAll();
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
+    public ResponseEntity<List<CategoriaProductoResponse>> obtenerTodas() {
+        List<CategoriaProducto> categorias = categoriaService.obtenerTodas();
+        return ResponseEntity.ok(categoriaMapper.toResponseList(categorias));
+    }
+
+    @GetMapping("/activas")
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
+    public ResponseEntity<List<CategoriaProductoResponse>> obtenerActivas() {
+        List<CategoriaProducto> categorias = categoriaService.obtenerActivas();
+        return ResponseEntity.ok(categoriaMapper.toResponseList(categorias));
     }
 
     @GetMapping("/{id}")
-    public CategoriaProducto obtenerPorId(@PathVariable Long id) {
-        return categoriaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Categoría no encontrada"
-                ));
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
+    public ResponseEntity<CategoriaProductoResponse> obtenerPorId(@PathVariable Long id) {
+        CategoriaProducto categoria = categoriaService.obtenerPorId(id);
+        return ResponseEntity.ok(categoriaMapper.toResponse(categoria));
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public CategoriaProducto crear(@RequestBody CategoriaProducto categoria) {
-        return categoriaRepository.save(categoria);
+    @PreAuthorize("hasAuthority('Admin')")
+    public ResponseEntity<CategoriaProductoResponse> crear(@RequestBody CategoriaProductoRequest request) {
+        CategoriaProducto categoria = categoriaMapper.toEntity(request);
+        CategoriaProducto categoriaCreada = categoriaService.crear(categoria);
+        return ResponseEntity.status(HttpStatus.CREATED).body(categoriaMapper.toResponse(categoriaCreada));
     }
 
     @PutMapping("/{id}")
-    public CategoriaProducto actualizar(@PathVariable Long id, @RequestBody CategoriaProducto categoria) {
-        if (!categoriaRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoría no encontrada");
-        }
-        categoria.setIdCategoria(id);
-        return categoriaRepository.save(categoria);
+    @PreAuthorize("hasAuthority('Admin')")
+    public ResponseEntity<CategoriaProductoResponse> actualizar(@PathVariable Long id, @RequestBody CategoriaProductoRequest request) {
+        CategoriaProducto categoria = categoriaService.obtenerPorId(id);
+        categoriaMapper.updateEntity(request, categoria);
+        CategoriaProducto categoriaActualizada = categoriaService.actualizar(id, categoria);
+        return ResponseEntity.ok(categoriaMapper.toResponse(categoriaActualizada));
     }
 
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminar(@PathVariable Long id) {
-        categoriaRepository.deleteById(id);
+    @PatchMapping("/{id}/desactivar")
+    @PreAuthorize("hasAuthority('Admin')")
+    public ResponseEntity<?> desactivar(@PathVariable Long id) {
+        categoriaService.desactivar(id);
+        return ResponseEntity.ok().body("Categoría desactivada exitosamente");
     }
 }
-

@@ -1,5 +1,6 @@
 package com.facturacion.backend.controllers;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.facturacion.backend.models.Role;
 import com.facturacion.backend.models.Usuario;
 import com.facturacion.backend.repositories.RoleRepository;
@@ -141,7 +142,7 @@ public class AuthController {
 
     /**
      * POST /api/auth/logout
-     * Invalida el token actual 
+     * Invalida el token actual
      */
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {

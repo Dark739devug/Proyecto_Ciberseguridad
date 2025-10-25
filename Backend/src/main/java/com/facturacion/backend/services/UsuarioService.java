@@ -1,7 +1,6 @@
 package com.facturacion.backend.services;
 
 import com.facturacion.backend.models.Login;
-import com.facturacion.backend.models.Role;
 import com.facturacion.backend.models.Usuario;
 import com.facturacion.backend.repositories.LoginRepository;
 import com.facturacion.backend.repositories.UsuarioRepository;
@@ -11,6 +10,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class UsuarioService implements UserDetailsService {
@@ -29,44 +30,27 @@ public class UsuarioService implements UserDetailsService {
 
     /**
      * Registra un nuevo usuario con su login
-     * @param usuario Objeto Usuario con nombre, apellido, email, rol
-     * @param email Email para login
-     * @param contrasenaPlana Contraseña sin hashear
-     * @return Usuario guardado
      */
     @Transactional
     public Usuario registrarNuevoUsuario(Usuario usuario, String email, String contrasenaPlana) {
-
-        // Establecer el email en el usuario
-        usuario.setEmail(email);
-
-        // Hashear la contraseña
         String contrasenaHasheada = passwordEncoder.encode(contrasenaPlana);
-
-        // Guardar el usuario primero
         Usuario nuevoUsuario = usuarioRepository.save(usuario);
 
-        // Crear y guardar el login
         Login login = new Login();
         login.setEmail(email);
         login.setPasswordHash(contrasenaHasheada);
         login.setUsuario(nuevoUsuario);
         loginRepository.save(login);
 
-        // Establecer la relación bidireccional
         nuevoUsuario.setLogin(login);
-
         return nuevoUsuario;
     }
 
     /**
-     * Implementación de UserDetailsService
-     * Carga el usuario por email y retorna el Usuario (que implementa UserDetails)
-     * Esto permite que Spring Security tenga acceso a los roles
+     * Implementación de UserDetailsService para autenticación
      */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-
         Login login = loginRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + email));
 
@@ -76,8 +60,58 @@ public class UsuarioService implements UserDetailsService {
             throw new UsernameNotFoundException("Usuario no encontrado: " + email);
         }
 
-        // Retornar el Usuario que implementa UserDetails
-        // Esto incluye automáticamente los roles desde getAuthorities()
         return usuario;
+    }
+
+    /**
+     * Obtiene todos los usuarios
+     */
+    public List<Usuario> obtenerTodosLosUsuarios() {
+        return usuarioRepository.findAll();
+    }
+
+    /**
+     * Obtiene un usuario por ID
+     */
+    public Usuario obtenerUsuarioPorId(Long id) {
+        return usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+    }
+
+    /**
+     * Obtiene un usuario por email
+     */
+    public Usuario obtenerUsuarioPorEmail(String email) {
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con email: " + email));
+    }
+
+    /**
+     * Actualiza un usuario
+     */
+    @Transactional
+    public Usuario actualizarUsuario(Long id, Usuario usuarioActualizado) {
+        Usuario usuario = obtenerUsuarioPorId(id);
+
+        usuario.setNombre(usuarioActualizado.getNombre());
+        usuario.setApellido(usuarioActualizado.getApellido());
+        usuario.setEmail(usuarioActualizado.getEmail());
+        usuario.setActivo(usuarioActualizado.getActivo());
+
+        if (usuarioActualizado.getRol() != null) {
+            usuario.setRol(usuarioActualizado.getRol());
+        }
+
+        return usuarioRepository.save(usuario);
+    }
+
+    /**
+     * Desactiva un usuario
+     */
+    @Transactional
+    public void desactivarUsuario(Long id) {
+        Usuario usuario = obtenerUsuarioPorId(id);
+        usuario.setActivo(false);
+        usuarioRepository.save(usuario);
     }
 }
