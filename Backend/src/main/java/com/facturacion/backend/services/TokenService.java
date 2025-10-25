@@ -20,7 +20,7 @@ public class TokenService {
     public String generateToken(Authentication authentication) {
         Instant now = Instant.now();
 
-        // Aquí puedes obtener los roles/autoridades del usuario si los tuvieras
+        // Extraer los roles (Authorities) del objeto Authentication para usarlos como 'scope'
         String scope = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));
@@ -30,7 +30,7 @@ public class TokenService {
                 .issuedAt(now)
                 .expiresAt(now.plus(1, ChronoUnit.HOURS)) // Expira en 1 hora
                 .subject(authentication.getName()) // El nombre de usuario (correo)
-                .claim("scope", scope)
+                .claim("scope", scope) // Incluir el rol (Ej: "Admin")
                 .build();
 
         // Firma y devuelve el token

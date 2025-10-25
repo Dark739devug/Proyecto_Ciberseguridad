@@ -16,7 +16,7 @@ public class Establecimiento {
     @Column(name = "id_establecimiento")
     private Long idEstablecimiento;
 
-    @Column(nullable = false, unique = true, length = 20)
+    @Column(name = "nit", nullable = false, unique = true, length = 20)
     private String nit;
 
     @Column(name = "nombre_comercial", nullable = false, length = 200)
@@ -25,38 +25,40 @@ public class Establecimiento {
     @Column(name = "razon_social", nullable = false, length = 200)
     private String razonSocial;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "direccion", nullable = false)
     private String direccion;
 
-    @Column(length = 100)
+    @Column(name = "municipio", length = 100)
     private String municipio;
 
-    @Column(length = 100)
+    @Column(name = "departamento", length = 100)
     private String departamento;
 
     @Column(name = "codigo_postal", length = 10)
     private String codigoPostal;
 
-    @Column(length = 20)
+    @Column(name = "telefono", length = 20)
     private String telefono;
 
-    @Column(length = 150)
+    @Column(name = "email", length = 150)
     private String email;
 
     @Column(name = "codigo_establecimiento", unique = true, length = 10)
     private String codigoEstablecimiento;
 
-    @Column(name = "activo_certificador", nullable = false)
+    @Column(name = "activo_certificador")
     private Boolean activoCertificador = true;
 
-    @Column(name = "fecha_registro", nullable = false, updatable = false)
+    @Column(name = "fecha_registro", updatable = false)
     private LocalDateTime fechaRegistro;
 
-    @Column(nullable = false)
+    @Column(name = "activo")
     private Boolean activo = true;
 
     @PrePersist
     protected void onCreate() {
-        fechaRegistro = LocalDateTime.now();
+        if (fechaRegistro == null) {
+            fechaRegistro = LocalDateTime.now();
+        }
     }
 }

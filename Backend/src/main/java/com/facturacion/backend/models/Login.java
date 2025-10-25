@@ -3,28 +3,39 @@ package com.facturacion.backend.models;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "login")
+@Table(name = "login_usuarios")
 @Data
 @NoArgsConstructor
 public class Login {
 
-    // Mapea id_login SERIAL PRIMARY KEY
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_login")
     private Long idLogin;
 
-    // Mapea correo_electronico VARCHAR(150) UNIQUE
-    @Column(name = "correo_electronico", nullable = false, unique = true, length = 150)
-    private String correoElectronico;
+    @Column(name = "email", nullable = false, unique = true, length = 150)
+    private String email;
 
-    // Mapea contrasena VARCHAR(255)
-    @Column(nullable = false)
-    private String contrasena;
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
 
-    // Relación One-to-One: Login tiene la clave foránea (FK) id_usuario
+    @Column(name = "ultimo_login")
+    private LocalDateTime ultimoLogin;
+
+    @Column(name = "fecha_creacion", updatable = false)
+    private LocalDateTime fechaCreacion;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false, unique = true)
     private Usuario usuario;
+
+    @PrePersist
+    protected void onCreate() {
+        if (fechaCreacion == null) {
+            fechaCreacion = LocalDateTime.now();
+        }
+    }
 }

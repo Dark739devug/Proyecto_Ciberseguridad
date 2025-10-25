@@ -39,6 +39,8 @@ import java.security.interfaces.RSAPublicKey;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
+
 public class SecurityConfig {
 
     // Lista de rutas públicas (no requieren Token)
@@ -91,9 +93,6 @@ public class SecurityConfig {
         return NimbusJwtDecoder.withPublicKey(this.rsaPublicKey).build();
     }
 
-    // =========================================================================
-    // CONFIGURACIÓN CORS (Crucial para la comunicación con el Frontend en 3000)
-    // =========================================================================
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

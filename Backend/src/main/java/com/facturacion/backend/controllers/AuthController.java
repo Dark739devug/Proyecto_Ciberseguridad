@@ -1,86 +1,192 @@
 package com.facturacion.backend.controllers;
 
+import com.facturacion.backend.models.Role;
 import com.facturacion.backend.models.Usuario;
+import com.facturacion.backend.repositories.RoleRepository;
 import com.facturacion.backend.services.UsuarioService;
-import com.facturacion.backend.services.TokenService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired
-    private UsuarioService usuarioService;
+    private final UsuarioService usuarioService;
+    private final AuthenticationManager authenticationManager;
+    private final RoleRepository roleRepository;
+    private final JwtEncoder jwtEncoder;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    public AuthController(UsuarioService usuarioService,
+                          AuthenticationManager authenticationManager,
+                          RoleRepository roleRepository,
+                          JwtEncoder jwtEncoder) {
+        this.usuarioService = usuarioService;
+        this.authenticationManager = authenticationManager;
+        this.roleRepository = roleRepository;
+        this.jwtEncoder = jwtEncoder;
+    }
 
-    @Autowired
-    private TokenService tokenService;
-
-    // DTO para recibir el cuerpo de la petición de registro
+    // DTOs usando records (como tenías antes)
     public record RegistroRequest(
             String nombre,
             String apellido,
-            LocalDate fechaNacimiento,
-            String nit,
-            String dpi,
-            String correoElectronico,
-            String contrasena
+            String email,
+            String contrasena,
+            Long idRol
     ) {}
 
-    // DTO para recibir el cuerpo de la petición de login
-    public record LoginRequest(String correoElectronico, String contrasena) {}
+    public record LoginRequest(
+            String email,
+            String password
+    ) {}
 
-    // 1. ENDPOINT DE REGISTRO: POST /api/auth/register
-    // Este endpoint ya lo probamos y funciona para crear el usuario y cifrar la contraseña
+    /**
+     * POST /api/auth/register
+     * Registra un nuevo usuario + credenciales en login_usuarios
+     */
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public Usuario registrarUsuario(@RequestBody RegistroRequest request) {
+    public ResponseEntity<?> registrarUsuario(@RequestBody RegistroRequest request) {
+        try {
+            // Buscar el rol
+            Role rol = roleRepository.findById(request.idRol())
+                    .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + request.idRol()));
 
-        Usuario nuevoUsuario = new Usuario();
-        nuevoUsuario.setNombre(request.nombre());
-        nuevoUsuario.setApellido(request.apellido());
-        nuevoUsuario.setFechaNacimiento(request.fechaNacimiento());
-        nuevoUsuario.setNit(request.nit());
-        nuevoUsuario.setDpi(request.dpi());
+            // Crear usuario
+            Usuario usuario = new Usuario();
+            usuario.setNombre(request.nombre());
+            usuario.setApellido(request.apellido());
+            usuario.setRol(rol);
+            usuario.setActivo(true);
 
-        return usuarioService.registrarNuevoUsuario(
-                nuevoUsuario,
-                request.correoElectronico(),
-                request.contrasena()
-        );
+            // Registrar (guarda en usuarios + login_usuarios)
+            Usuario nuevoUsuario = usuarioService.registrarNuevoUsuario(
+                    usuario,
+                    request.email(),
+                    request.contrasena()
+            );
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Usuario registrado exitosamente");
+            response.put("idUsuario", nuevoUsuario.getIdUsuario());
+            response.put("nombre", nuevoUsuario.getNombre() + " " + nuevoUsuario.getApellido());
+            response.put("email", request.email());
+            response.put("rol", rol.getNombreRol());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Error al registrar: " + e.getMessage()));
+        }
     }
 
-    // 2. ENDPOINT DE LOGIN: POST /api/auth/token
-    // Este endpoint es el que reemplaza el formLogin y devuelve el JWT
-    @PostMapping("/token")
-    public String token(@RequestBody LoginRequest loginRequest) {
+    /**
+     * POST /api/auth/login
+     * Valida credenciales y retorna JWT token + info del usuario
+     */
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {
-            // 1. Intentar autenticar las credenciales usando el AuthenticationManager
-            // El AuthenticationManager usará tu UsuarioService para buscar el usuario y BCrypt para verificar la contraseña
+            // Autenticar
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            loginRequest.correoElectronico(),
-                            loginRequest.contrasena()
+                            request.email(),
+                            request.password()
                     )
             );
 
-            // 2. Si la autenticación es exitosa, generar el token JWT
-            return tokenService.generateToken(authentication);
+            Usuario usuario = (Usuario) authentication.getPrincipal();
 
-        } catch (AuthenticationException e) {
-            // Si las credenciales son incorrectas, lanza una excepción de no autorizado (401)
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales incorrectas o usuario no encontrado.");
+            // Generar JWT Token
+            Instant now = Instant.now();
+            long expiry = 36000L; // 10 horas
+
+            JwtClaimsSet claims = JwtClaimsSet.builder()
+                    .issuer("self")
+                    .issuedAt(now)
+                    .expiresAt(now.plusSeconds(expiry))
+                    .subject(usuario.getUsername())
+                    .claim("rol", usuario.getRol().getNombreRol())
+                    .claim("idUsuario", usuario.getIdUsuario())
+                    .claim("nombre", usuario.getNombre() + " " + usuario.getApellido())
+                    .build();
+
+            String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
+            // Respuesta con token + info del usuario
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
+            response.put("email", usuario.getUsername());
+            response.put("nombre", usuario.getNombre() + " " + usuario.getApellido());
+            response.put("rol", usuario.getRol().getNombreRol());
+            response.put("idUsuario", usuario.getIdUsuario());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("error", "Credenciales inválidas"));
         }
     }
+
+    /**
+     * POST /api/auth/logout
+     * Invalida el token actual 
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        // En JWT stateless, el logout se maneja en el frontend eliminando el token
+        // Aquí solo confirmamos la acción
+        return ResponseEntity.ok().body(Map.of(
+                "mensaje", "Logout exitoso. Token invalidado en el cliente."
+        ));
+    }
+
+    /**
+     * POST /api/auth/refresh
+     * Refresca el token JWT
+     */
+    @PostMapping("/refresh")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> refreshToken(Authentication authentication) {
+        try {
+            Usuario usuario = (Usuario) authentication.getPrincipal();
+
+            // Generar nuevo token
+            Instant now = Instant.now();
+            long expiry = 36000L;
+
+            JwtClaimsSet claims = JwtClaimsSet.builder()
+                    .issuer("self")
+                    .issuedAt(now)
+                    .expiresAt(now.plusSeconds(expiry))
+                    .subject(usuario.getUsername())
+                    .claim("rol", usuario.getRol().getNombreRol())
+                    .claim("idUsuario", usuario.getIdUsuario())
+                    .claim("nombre", usuario.getNombre() + " " + usuario.getApellido())
+                    .build();
+
+            String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
+            return ResponseEntity.ok(Map.of(
+                    "token", token,
+                    "mensaje", "Token refrescado exitosamente"
+            ));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("error", "No se pudo refrescar el token"));
+        }
+    }
+
 }
