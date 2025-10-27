@@ -62,10 +62,11 @@ public class AuthController {
             Role rol = roleRepository.findById(request.idRol())
                     .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + request.idRol()));
 
-            // Crear usuario
+            // Crear usuario CON EMAIL
             Usuario usuario = new Usuario();
             usuario.setNombre(request.nombre());
             usuario.setApellido(request.apellido());
+            usuario.setEmail(request.email());  // ← AGREGA ESTA LÍNEA
             usuario.setRol(rol);
             usuario.setActivo(true);
 
@@ -80,7 +81,7 @@ public class AuthController {
             response.put("mensaje", "Usuario registrado exitosamente");
             response.put("idUsuario", nuevoUsuario.getIdUsuario());
             response.put("nombre", nuevoUsuario.getNombre() + " " + nuevoUsuario.getApellido());
-            response.put("email", request.email());
+            response.put("email", nuevoUsuario.getEmail());
             response.put("rol", rol.getNombreRol());
 
             return ResponseEntity.ok(response);
@@ -117,7 +118,7 @@ public class AuthController {
                     .issuedAt(now)
                     .expiresAt(now.plusSeconds(expiry))
                     .subject(usuario.getUsername())
-                    .claim("rol", usuario.getRol().getNombreRol())
+                    .claim("scope", usuario.getRol().getNombreRol())
                     .claim("idUsuario", usuario.getIdUsuario())
                     .claim("nombre", usuario.getNombre() + " " + usuario.getApellido())
                     .build();
