@@ -1,16 +1,14 @@
+
 -- ============================================
--- BASE DE DATOS: sistema_facturacion_web
--- Sistema de Facturación Electrónica Guatemala
+-- 🚀 BASE DE DATOS: sistema_facturacion_web
 -- ============================================
 
 -- CREATE DATABASE sistema_facturacion_web;
--- \c sistema_facturacion_web;
 
 -- ============================================
--- TABLAS BASE
+-- TABLAS PRINCIPALES
 -- ============================================
 
--- Tabla de Roles
 CREATE TABLE roles (
     id_rol SERIAL PRIMARY KEY,
     nombre_rol VARCHAR(50) NOT NULL UNIQUE,
@@ -19,7 +17,6 @@ CREATE TABLE roles (
     activo BOOLEAN DEFAULT TRUE
 );
 
--- Tabla de Usuarios
 CREATE TABLE usuarios (
     id_usuario SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
@@ -30,18 +27,6 @@ CREATE TABLE usuarios (
     FOREIGN KEY (id_rol) REFERENCES roles(id_rol)
 );
 
--- Tabla de Login (credenciales separadas)
-CREATE TABLE login_usuarios (
-    id_login SERIAL PRIMARY KEY,
-    id_usuario INTEGER NOT NULL UNIQUE,
-    email VARCHAR(150) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    ultimo_login TIMESTAMP,
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
-);
-
--- Tabla de Establecimientos
 CREATE TABLE establecimientos (
     id_establecimiento SERIAL PRIMARY KEY,
     nit VARCHAR(20) NOT NULL UNIQUE,
@@ -59,7 +44,6 @@ CREATE TABLE establecimientos (
     activo BOOLEAN DEFAULT TRUE
 );
 
--- Tabla de Clientes
 CREATE TABLE clientes (
     id_cliente SERIAL PRIMARY KEY,
     nit VARCHAR(20) NOT NULL,
@@ -75,7 +59,6 @@ CREATE TABLE clientes (
     CONSTRAINT unique_nit_cliente UNIQUE (nit)
 );
 
--- Tabla de Categorías de Productos
 CREATE TABLE categorias_productos (
     id_categoria SERIAL PRIMARY KEY,
     nombre_categoria VARCHAR(100) NOT NULL UNIQUE,
@@ -83,7 +66,6 @@ CREATE TABLE categorias_productos (
     activo BOOLEAN DEFAULT TRUE
 );
 
--- Tabla de Productos
 CREATE TABLE productos (
     id_producto SERIAL PRIMARY KEY,
     codigo_producto VARCHAR(50) NOT NULL UNIQUE,
@@ -101,7 +83,6 @@ CREATE TABLE productos (
     FOREIGN KEY (id_establecimiento) REFERENCES establecimientos(id_establecimiento)
 );
 
--- Tabla de Tipos de Documento
 CREATE TABLE tipos_documento (
     id_tipo_documento SERIAL PRIMARY KEY,
     codigo_tipo VARCHAR(10) NOT NULL UNIQUE,
@@ -110,7 +91,6 @@ CREATE TABLE tipos_documento (
     activo BOOLEAN DEFAULT TRUE
 );
 
--- Tabla de Estados de Factura
 CREATE TABLE estados_factura (
     id_estado SERIAL PRIMARY KEY,
     codigo_estado VARCHAR(20) NOT NULL UNIQUE,
@@ -118,7 +98,6 @@ CREATE TABLE estados_factura (
     descripcion TEXT
 );
 
--- Tabla de Facturas (Encabezado)
 CREATE TABLE facturas (
     id_factura SERIAL PRIMARY KEY,
     numero_factura VARCHAR(50) UNIQUE,
@@ -151,7 +130,6 @@ CREATE TABLE facturas (
     FOREIGN KEY (id_usuario_anulacion) REFERENCES usuarios(id_usuario)
 );
 
--- Tabla de Detalle de Facturas
 CREATE TABLE detalle_facturas (
     id_detalle SERIAL PRIMARY KEY,
     id_factura INTEGER NOT NULL,
@@ -171,7 +149,6 @@ CREATE TABLE detalle_facturas (
     CONSTRAINT unique_linea_factura UNIQUE (id_factura, numero_linea)
 );
 
--- Tabla de Bitácora de Certificación
 CREATE TABLE bitacora_certificacion (
     id_bitacora SERIAL PRIMARY KEY,
     id_factura INTEGER NOT NULL,
@@ -186,7 +163,6 @@ CREATE TABLE bitacora_certificacion (
     FOREIGN KEY (usuario_responsable) REFERENCES usuarios(id_usuario)
 );
 
--- Tabla de Configuración del Sistema
 CREATE TABLE configuracion_sistema (
     id_configuracion SERIAL PRIMARY KEY,
     clave VARCHAR(100) NOT NULL UNIQUE,
@@ -196,7 +172,6 @@ CREATE TABLE configuracion_sistema (
     fecha_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de Auditoría
 CREATE TABLE auditoria (
     id_auditoria SERIAL PRIMARY KEY,
     id_usuario INTEGER,
@@ -211,12 +186,11 @@ CREATE TABLE auditoria (
 );
 
 -- ============================================
--- ÍNDICES PARA OPTIMIZACIÓN
+-- ÍNDICES
 -- ============================================
 
 CREATE INDEX idx_usuarios_email ON usuarios(email);
 CREATE INDEX idx_usuarios_rol ON usuarios(id_rol);
-CREATE INDEX idx_login_email ON login_usuarios(email);
 CREATE INDEX idx_clientes_nit ON clientes(nit);
 CREATE INDEX idx_clientes_razon_social ON clientes(razon_social);
 CREATE INDEX idx_productos_codigo ON productos(codigo_producto);
@@ -225,7 +199,6 @@ CREATE INDEX idx_productos_activo ON productos(activo);
 CREATE INDEX idx_facturas_numero ON facturas(numero_factura);
 CREATE INDEX idx_facturas_estado ON facturas(id_estado);
 CREATE INDEX idx_facturas_fecha_emision ON facturas(fecha_emision);
-CREATE INDEX idx_facturas_cliente ON facturas(id_cliente);
 CREATE INDEX idx_bitacora_factura ON bitacora_certificacion(id_factura);
 CREATE INDEX idx_auditoria_usuario ON auditoria(id_usuario);
 
@@ -233,18 +206,15 @@ CREATE INDEX idx_auditoria_usuario ON auditoria(id_usuario);
 -- DATOS INICIALES
 -- ============================================
 
--- Insertar Roles
 INSERT INTO roles (nombre_rol, descripcion) VALUES
 ('Admin', 'Administrador del sistema con acceso completo'),
 ('Facturación', 'Usuario de facturación con permisos limitados');
 
--- Insertar Tipos de Documento
 INSERT INTO tipos_documento (codigo_tipo, nombre_tipo, descripcion) VALUES
 ('FACT', 'Factura', 'Factura electrónica estándar'),
 ('NCRE', 'Nota de Crédito', 'Nota de crédito electrónica'),
 ('NDEB', 'Nota de Débito', 'Nota de débito electrónica');
 
--- Insertar Estados de Factura
 INSERT INTO estados_factura (codigo_estado, nombre_estado, descripcion) VALUES
 ('BORRADOR', 'Borrador', 'Factura en proceso de creación'),
 ('PENDIENTE', 'Pendiente Certificación', 'Factura pendiente de enviar a certificar'),
@@ -252,7 +222,6 @@ INSERT INTO estados_factura (codigo_estado, nombre_estado, descripcion) VALUES
 ('ANULADA', 'Anulada', 'Factura anulada'),
 ('ERROR', 'Error', 'Error en la certificación');
 
--- Insertar Categorías de Productos
 INSERT INTO categorias_productos (nombre_categoria, descripcion) VALUES
 ('Electrónicos', 'Productos electrónicos en general'),
 ('Alimentos', 'Productos alimenticios'),
@@ -260,19 +229,17 @@ INSERT INTO categorias_productos (nombre_categoria, descripcion) VALUES
 ('Papelería', 'Productos de oficina y papelería'),
 ('Otros', 'Artículos varios');
 
--- Insertar Configuración del Sistema
 INSERT INTO configuracion_sistema (clave, valor, descripcion, tipo_dato) VALUES
 ('URL_API_CERTIFICACION', 'http://localhost:3001/api/certificacion', 'URL de la API de certificación', 'STRING'),
 ('TASA_IVA', '0.12', 'Tasa de IVA en Guatemala (12%)', 'DECIMAL'),
 ('TIMEOUT_CERTIFICACION', '30', 'Timeout en segundos para certificación', 'INTEGER'),
-('EMPRESA_NOMBRE', 'Empresa de Facturación Guatemala', 'Nombre de la empresa', 'STRING'),
+('EMPRESA_NOMBRE', 'Empresa de Inventario Guatemala', 'Nombre de la empresa', 'STRING'),
 ('EMPRESA_NIT', '12345678-9', 'NIT de la empresa', 'STRING');
 
 -- ============================================
 -- FUNCIONES Y TRIGGERS
 -- ============================================
 
--- Función para actualizar stock de productos
 CREATE OR REPLACE FUNCTION actualizar_stock_producto()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -289,13 +256,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger para actualizar stock automáticamente
 CREATE TRIGGER trigger_actualizar_stock
 AFTER INSERT OR DELETE ON detalle_facturas
 FOR EACH ROW
 EXECUTE FUNCTION actualizar_stock_producto();
 
--- Función para generar número de factura automático
 CREATE OR REPLACE FUNCTION generar_numero_factura()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -306,24 +271,20 @@ BEGIN
     FROM facturas
     WHERE id_establecimiento = NEW.id_establecimiento
     AND serie = TO_CHAR(CURRENT_DATE, 'YYYY');
-    
     nueva_serie := TO_CHAR(CURRENT_DATE, 'YYYY');
     NEW.serie := nueva_serie;
     NEW.correlativo := ultimo_correlativo + 1;
     NEW.numero_factura := nueva_serie || '-' || LPAD(NEW.correlativo::TEXT, 8, '0');
-    
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger para generar número de factura
 CREATE TRIGGER trigger_generar_numero_factura
 BEFORE INSERT ON facturas
 FOR EACH ROW
 WHEN (NEW.numero_factura IS NULL)
 EXECUTE FUNCTION generar_numero_factura();
 
--- Función para registrar auditoría
 CREATE OR REPLACE FUNCTION registrar_auditoria()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -341,17 +302,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger para auditoría de facturas
 CREATE TRIGGER trigger_auditoria_facturas
 AFTER INSERT OR UPDATE OR DELETE ON facturas
 FOR EACH ROW
 EXECUTE FUNCTION registrar_auditoria();
 
 -- ============================================
--- VISTAS ÚTILES
+-- VISTAS
 -- ============================================
 
--- Vista de Facturas Completas
 CREATE OR REPLACE VIEW vista_facturas_completas AS
 SELECT 
     f.id_factura,
@@ -373,6 +332,7 @@ SELECT
     f.total_iva,
     f.total_factura,
     (u.nombre || ' ' || u.apellido) AS usuario_creacion,
+    u.email AS correo_usuario,
     f.observaciones,
     f.fecha_anulacion,
     f.motivo_anulacion
@@ -383,7 +343,6 @@ INNER JOIN tipos_documento td ON f.id_tipo_documento = td.id_tipo_documento
 INNER JOIN estados_factura ef ON f.id_estado = ef.id_estado
 INNER JOIN usuarios u ON f.id_usuario_creacion = u.id_usuario;
 
--- Vista de Catálogo de Productos
 CREATE OR REPLACE VIEW vista_productos_catalogo AS
 SELECT 
     p.id_producto,
@@ -400,12 +359,5 @@ FROM productos p
 LEFT JOIN categorias_productos c ON p.id_categoria = c.id_categoria;
 
 -- ============================================
--- COMENTARIOS EN TABLAS
+-- ✅ FIN DEL SCRIPT FINAL (login con email)
 -- ============================================
-
-COMMENT ON TABLE usuarios IS 'Usuarios del sistema de facturación';
-COMMENT ON TABLE login_usuarios IS 'Credenciales de autenticación separadas por seguridad';
-COMMENT ON TABLE facturas IS 'Encabezado de facturas electrónicas';
-COMMENT ON TABLE detalle_facturas IS 'Líneas de detalle de las facturas';
-COMMENT ON TABLE bitacora_certificacion IS 'Registro de intentos de certificación al certificador FEL';
-COMMENT ON TABLE auditoria IS 'Registro de todas las operaciones importantes del sistema';
