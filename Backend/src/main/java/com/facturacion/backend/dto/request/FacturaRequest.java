@@ -1,16 +1,15 @@
 package com.facturacion.backend.dto.request;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public class FacturaRequest {
     private Long idEstablecimiento;
     private Long idCliente;
     private Long idTipoDocumento;
+    private Long idUsuarioCreacion; // ← AGREGADO
     private String observaciones;
     private List<DetalleFacturaRequest> detalles;
 
-    // Constructor vacío
     public FacturaRequest() {}
 
     // Getters y Setters
@@ -22,6 +21,9 @@ public class FacturaRequest {
 
     public Long getIdTipoDocumento() { return idTipoDocumento; }
     public void setIdTipoDocumento(Long idTipoDocumento) { this.idTipoDocumento = idTipoDocumento; }
+
+    public Long getIdUsuarioCreacion() { return idUsuarioCreacion; }
+    public void setIdUsuarioCreacion(Long idUsuarioCreacion) { this.idUsuarioCreacion = idUsuarioCreacion; }
 
     public String getObservaciones() { return observaciones; }
     public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
