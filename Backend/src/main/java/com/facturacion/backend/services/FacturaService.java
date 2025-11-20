@@ -267,4 +267,16 @@ public class FacturaService {
         return detalleFacturaRepository.findByFactura_IdFactura(idFactura);
     }
 
+    // Obtener factura por número
+    public Factura obtenerPorNumero(String numeroFactura) {
+        return facturaRepository.findByNumeroFactura(numeroFactura)
+                .orElseThrow(() -> new RuntimeException("Factura no encontrada"));
+    }
+
+    // Obtener facturas por rango de fechas
+    public List<Factura> obtenerPorRangoFechas(LocalDateTime fechaInicio, LocalDateTime fechaFin) {
+        return facturaRepository.findByFechaEmisionBetween(fechaInicio, fechaFin);
+    }
+
+
 }

@@ -3,18 +3,17 @@ package com.facturacion.backend.controllers;
 import com.facturacion.backend.dto.request.FacturaRequest;
 import com.facturacion.backend.dto.response.FacturaResponse;
 import com.facturacion.backend.mapper.FacturaMapper;
+import com.facturacion.backend.models.DetalleFactura;
 import com.facturacion.backend.models.Factura;
-import com.facturacion.backend.repositories.FacturaRepository;
 import com.facturacion.backend.services.FacturaService;
+import com.facturacion.backend.services.PdfService;
+import com.facturacion.backend.services.XmlService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import com.facturacion.backend.models.DetalleFactura;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -27,24 +26,21 @@ import java.util.stream.Collectors;
 public class FacturaController {
 
     @Autowired
-    private FacturaRepository facturaRepository;
-
-    @Autowired
     private FacturaService facturaService;
 
     @Autowired
     private FacturaMapper facturaMapper;
 
-    /**
-     * POST /api/facturas
-     * Crea una factura completa con cálculo automático de totales
-     */
+    @Autowired
+    private PdfService pdfService;
+
+    @Autowired
+    private XmlService xmlService;
+
     @PostMapping
     @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<?> crear(@RequestBody FacturaRequest request) {
         try {
-            // Convertir DTOs a formato del Service
             List<FacturaService.DetalleFacturaRequest> detalles = request.getDetalles().stream()
                     .map(item -> {
                         FacturaService.DetalleFacturaRequest detalle = new FacturaService.DetalleFacturaRequest();
@@ -55,7 +51,6 @@ public class FacturaController {
                     })
                     .collect(Collectors.toList());
 
-            // Crear factura usando el Service (calcula automáticamente)
             Factura factura = facturaService.crearFactura(
                     request.getIdEstablecimiento(),
                     request.getIdCliente(),
@@ -65,7 +60,6 @@ public class FacturaController {
                     request.getObservaciones()
             );
 
-            // Obtener detalles y mapear CON detalles
             List<DetalleFactura> detallesFactura = facturaService.obtenerDetallesPorFactura(factura.getIdFactura());
             FacturaResponse response = facturaMapper.toResponseConDetalles(factura, detallesFactura);
 
@@ -81,107 +75,60 @@ public class FacturaController {
         }
     }
 
-    /**
-     * GET /api/facturas
-     * Lista todas las facturas CON detalles
-     */
     @GetMapping
     @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
     public ResponseEntity<List<FacturaResponse>> listarTodas() {
-        List<Factura> facturas = facturaRepository.findAll();
-
-        // Mapear cada factura con sus detalles
+        List<Factura> facturas = facturaService.obtenerTodas();
         List<FacturaResponse> responses = facturas.stream()
-                .map(factura -> {
-                    List<DetalleFactura> detalles = facturaService.obtenerDetallesPorFactura(factura.getIdFactura());
-                    return facturaMapper.toResponseConDetalles(factura, detalles);
-                })
+                .map(f -> facturaMapper.toResponseConDetalles(f, facturaService.obtenerDetallesPorFactura(f.getIdFactura())))
                 .collect(Collectors.toList());
-
         return ResponseEntity.ok(responses);
     }
 
-    /**
-     * GET /api/facturas/{id}
-     * Obtiene una factura por ID CON detalles
-     */
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
     public ResponseEntity<FacturaResponse> obtenerPorId(@PathVariable Long id) {
-        Factura factura = facturaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Factura no encontrada"
-                ));
-
-        // Obtener detalles
+        Factura factura = facturaService.obtenerPorId(id);
         List<DetalleFactura> detalles = facturaService.obtenerDetallesPorFactura(id);
-
-        // Mapear con detalles
         FacturaResponse response = facturaMapper.toResponseConDetalles(factura, detalles);
-
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * GET /api/facturas/numero/{numeroFactura}
-     * Obtiene una factura por su número
-     */
     @GetMapping("/numero/{numeroFactura}")
     @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
     public ResponseEntity<FacturaResponse> obtenerPorNumero(@PathVariable String numeroFactura) {
-        Factura factura = facturaRepository.findByNumeroFactura(numeroFactura)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Factura no encontrada"
-                ));
+        Factura factura = facturaService.obtenerPorNumero(numeroFactura);
         return ResponseEntity.ok(facturaMapper.toResponse(factura));
     }
 
-    /**
-     * GET /api/facturas/estado/{idEstado}
-     * Lista facturas por estado
-     */
     @GetMapping("/estado/{idEstado}")
     @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
-    public ResponseEntity<List<FacturaResponse>> listarPorEstado(@PathVariable Long idEstado) {
-        List<Factura> facturas = facturaRepository.findByEstado_IdEstado(idEstado);
+    public ResponseEntity<List<FacturaResponse>> listarPorEstado(@PathVariable String idEstado) {
+        List<Factura> facturas = facturaService.obtenerPorEstado(idEstado);
         return ResponseEntity.ok(facturaMapper.toResponseList(facturas));
     }
 
-    /**
-     * GET /api/facturas/cliente/{idCliente}
-     * Lista facturas de un cliente
-     */
     @GetMapping("/cliente/{idCliente}")
     @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
     public ResponseEntity<List<FacturaResponse>> listarPorCliente(@PathVariable Long idCliente) {
-        List<Factura> facturas = facturaRepository.findByCliente_IdCliente(idCliente);
+        List<Factura> facturas = facturaService.obtenerPorCliente(idCliente);
         return ResponseEntity.ok(facturaMapper.toResponseList(facturas));
     }
 
-    /**
-     * GET /api/facturas/rango-fechas
-     * Lista facturas en un rango de fechas
-     */
     @GetMapping("/rango-fechas")
     @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
     public ResponseEntity<List<FacturaResponse>> listarPorRangoFechas(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFin) {
-        List<Factura> facturas = facturaRepository.findByFechaEmisionBetween(fechaInicio, fechaFin);
+        List<Factura> facturas = facturaService.obtenerPorRangoFechas(fechaInicio, fechaFin);
         return ResponseEntity.ok(facturaMapper.toResponseList(facturas));
     }
 
-    /**
-     * POST /api/facturas/{id}/certificar
-     * Envía factura a certificar
-     */
     @PostMapping("/{id}/certificar")
     @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
     public ResponseEntity<?> certificar(@PathVariable Long id) {
         try {
             Factura factura = facturaService.enviarACertificar(id);
-
-           
             List<DetalleFactura> detalles = facturaService.obtenerDetallesPorFactura(id);
 
             return ResponseEntity.ok(Map.of(
@@ -189,15 +136,10 @@ public class FacturaController {
                     "factura", facturaMapper.toResponseConDetalles(factura, detalles)
             ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
-    /**
-     * POST /api/facturas/{id}/anular
-     * Anula una factura
-     */
     @PostMapping("/{id}/anular")
     @PreAuthorize("hasAuthority('Admin')")
     public ResponseEntity<?> anular(
@@ -211,10 +153,40 @@ public class FacturaController {
                     "factura", facturaMapper.toResponse(factura)
             ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
+    @GetMapping("/{id}/pdf")
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
+    public ResponseEntity<byte[]> descargarPdf(@PathVariable Long id) {
+        Factura factura = facturaService.obtenerPorId(id);
+        List<DetalleFactura> detalles = facturaService.obtenerDetallesPorFactura(id);
+        byte[] pdfBytes = pdfService.generarPdfFactura(factura, detalles);
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename("Factura_" + String.valueOf(factura.getCorrelativo()) + ".pdf")
+                .build());
+
+        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}/xml")
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
+    public ResponseEntity<String> descargarXml(@PathVariable Long id) {
+        Factura factura = facturaService.obtenerPorId(id);
+        List<DetalleFactura> detalles = facturaService.obtenerDetallesPorFactura(id);
+        String xml = xmlService.generarXmlFactura(factura, detalles);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_XML);
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename("Factura_" + String.valueOf(factura.getCorrelativo()) + ".xml")
+                .build());
+
+        return new ResponseEntity<>(xml, headers, HttpStatus.OK);
+    }
 }
+
