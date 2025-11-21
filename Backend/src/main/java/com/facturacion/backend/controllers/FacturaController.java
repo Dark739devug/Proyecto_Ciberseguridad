@@ -173,6 +173,32 @@ public class FacturaController {
         return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
 
+    @GetMapping("/{id}/json-pre-certificacion")
+    @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
+    public ResponseEntity<?> obtenerJsonParaCertificar(@PathVariable Long id) {
+        try {
+            // 1. Obtener la factura y los detalles
+            Factura factura = facturaService.obtenerPorId(id);
+            List<DetalleFactura> detalles = facturaService.obtenerDetallesPorFactura(id);
+
+            // 2. Generar el XML con el formato DTE correcto
+            String xmlDTE = xmlService.generarXmlFactura(factura, detalles);
+
+            // 3. Crear el objeto JSON (Map) con la estructura solicitada por tu compañero
+            Map<String, String> requestBody = new HashMap<>();
+            requestBody.put("nitEmisor", factura.getEstablecimiento().getNit());
+            requestBody.put("xmlDTE", xmlDTE);
+            requestBody.put("firmaElectronica", "");
+
+            // 4. Devolver el JSON
+            return ResponseEntity.ok(requestBody);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Error al preparar la solicitud de certificación: " + e.getMessage()));
+        }
+    }
+
     @GetMapping("/{id}/xml")
     @PreAuthorize("hasAuthority('Admin') or hasAuthority('Facturación')")
     public ResponseEntity<String> descargarXml(@PathVariable Long id) {

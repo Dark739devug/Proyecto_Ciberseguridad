@@ -6,7 +6,7 @@ public class FacturaRequest {
     private Long idEstablecimiento;
     private Long idCliente;
     private Long idTipoDocumento;
-    private Long idUsuarioCreacion; // ← AGREGADO
+    private Long idUsuarioCreacion;
     private String observaciones;
     private List<DetalleFacturaRequest> detalles;
 
