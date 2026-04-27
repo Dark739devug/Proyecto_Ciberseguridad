@@ -1,5 +1,9 @@
 package com.facturacion.backend.controllers;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.facturacion.backend.models.Role;
 import com.facturacion.backend.models.Usuario;
@@ -37,18 +41,17 @@ public class AuthController {
         this.jwtEncoder = jwtEncoder;
     }
 
-    // DTOs usando records (como tenías antes)
+    // DTOs con validacion de entrada
     public record RegistroRequest(
-            String nombre,
-            String apellido,
-            String email,
-            String contrasena,
-            Long idRol
+            @NotBlank(message = "El nombre es obligatorio") String nombre,
+            @NotBlank(message = "El apellido es obligatorio") String apellido,
+            @Email(message = "Correo electrónico inválido") @NotBlank(message = "El email es obligatorio") String email,
+            @NotBlank(message = "La contraseña es obligatoria") @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres") String contrasena
     ) {}
 
     public record LoginRequest(
-            String email,
-            String password
+            @Email @NotBlank String email,
+            @NotBlank String password
     ) {}
 
     /**
@@ -56,11 +59,11 @@ public class AuthController {
      * Registra un nuevo usuario + credenciales en login_usuarios
      */
     @PostMapping("/register")
-    public ResponseEntity<?> registrarUsuario(@RequestBody RegistroRequest request) {
+    public ResponseEntity<?> registrarUsuario(@Valid @RequestBody RegistroRequest request) {
         try {
-            // Buscar el rol
-            Role rol = roleRepository.findById(request.idRol())
-                    .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + request.idRol()));
+            // El rol siempre es 'Facturación' — no se acepta del cliente
+            Role rol = roleRepository.findByNombreRol("Facturación")
+                    .orElseThrow(() -> new RuntimeException("Rol por defecto no encontrado"));
 
             // Crear usuario CON EMAIL
             Usuario usuario = new Usuario();
@@ -88,7 +91,7 @@ public class AuthController {
 
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Error al registrar: " + e.getMessage()));
+                    .body(Map.of("error", "No se pudo completar el registro. Verifique los datos ingresados."));
         }
     }
 
@@ -97,7 +100,7 @@ public class AuthController {
      * Valida credenciales y retorna JWT token + info del usuario
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try {
             // Autenticar
             Authentication authentication = authenticationManager.authenticate(
@@ -111,7 +114,7 @@ public class AuthController {
 
             // Generar JWT Token
             Instant now = Instant.now();
-            long expiry = 36000L; // 10 horas
+            long expiry = 3600L; // 1 hora
 
             JwtClaimsSet claims = JwtClaimsSet.builder()
                     .issuer("self")
@@ -166,14 +169,14 @@ public class AuthController {
 
             // Generar nuevo token
             Instant now = Instant.now();
-            long expiry = 36000L;
+            long expiry = 3600L; // 1 hora
 
             JwtClaimsSet claims = JwtClaimsSet.builder()
                     .issuer("self")
                     .issuedAt(now)
                     .expiresAt(now.plusSeconds(expiry))
                     .subject(usuario.getUsername())
-                    .claim("rol", usuario.getRol().getNombreRol())
+                    .claim("scope", usuario.getRol().getNombreRol())
                     .claim("idUsuario", usuario.getIdUsuario())
                     .claim("nombre", usuario.getNombre() + " " + usuario.getApellido())
                     .build();
