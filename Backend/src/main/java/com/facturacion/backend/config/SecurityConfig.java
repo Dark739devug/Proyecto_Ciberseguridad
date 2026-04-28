@@ -81,12 +81,21 @@ public class SecurityConfig {
         return NimbusJwtDecoder.withPublicKey(this.rsaPublicKey).build();
     }
 
+    // ==========================================
+    // AQUI ESTA LA CONFIGURACION CORS CORREGIDA
+    // ==========================================
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        
+        // Agregamos la URL de Vercel y mantenemos localhost por si tú quieres probar desde tu PC
+        configuration.setAllowedOrigins(Arrays.asList("https://proyecto-ciberseguridad.vercel.app", "http://localhost:3000"));
+        
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        
+        // Ciberseguridad: Necesario para que el frontend pueda enviar tokens y cookies
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
