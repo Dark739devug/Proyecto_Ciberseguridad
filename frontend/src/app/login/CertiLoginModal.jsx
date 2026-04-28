@@ -47,11 +47,7 @@ export default function CertiLoginModal({ isOpen, onClose, onSuccess, initialEma
             password: formData.password
         };
 
-        // 💡 PUNTO DE DEPURACIÓN: Muestra el objeto exacto que se envía al backend.
-        console.log("PAYLOAD ENVIADO A API 2 (Certificador):", payload);
-
-        try {
-            // 🎯 LLAMADA A LA API 2 USANDO 'username' COMO CLAVE
+        // 🎯 LLAMADA A LA API 2 USANDO 'username' COMO CLAVE
             const response = await apiCerti.post('/auth/login', payload);
 
             const parsed = response.data;

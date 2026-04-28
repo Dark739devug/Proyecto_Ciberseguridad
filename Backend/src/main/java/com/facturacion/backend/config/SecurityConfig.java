@@ -43,9 +43,6 @@ public class SecurityConfig {
 
     private static final String[] WHITE_LIST_URLS = {
             "/api/auth/**",
-            "/swagger-ui.html",
-            "/swagger-ui/**",
-            "/v3/api-docs/**",
     };
 
     private final KeyPair keyPair = generateRsaKey();

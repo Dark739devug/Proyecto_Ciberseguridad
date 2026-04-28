@@ -26,6 +26,13 @@ public class XmlService {
     public String generarXmlFactura(Factura factura, List<DetalleFactura> detalles) {
         try {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            // Proteccion contra ataques XXE (XML External Entity)
+            docFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            docFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            docFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            docFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            docFactory.setXIncludeAware(false);
+            docFactory.setExpandEntityReferences(false);
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 
             // --- 1. Elemento Raíz: <gte:GTDocumento> ---

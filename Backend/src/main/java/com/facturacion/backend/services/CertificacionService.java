@@ -68,9 +68,6 @@ public class CertificacionService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
 
-            System.out.println("🔥 Enviando al certificador: " + urlCertificador + "/certificar");
-            System.out.println("🔥 NIT Emisor: " + factura.getEstablecimiento().getNit());
-
             // 6. Llamar al certificador
             ResponseEntity<Map> response = restTemplate.exchange(
                     urlCertificador + "/certificar",
@@ -80,8 +77,6 @@ public class CertificacionService {
             );
 
             Map<String, Object> responseBody = response.getBody();
-
-            System.out.println("🔥 Respuesta del certificador: " + responseBody);
 
             if (response.getStatusCode() == HttpStatus.OK && responseBody != null) {
                 // 7. Certificación exitosa
@@ -108,8 +103,6 @@ public class CertificacionService {
                     // Guardar
                     facturaRepository.save(factura);
 
-                    System.out.println("✅ Factura certificada exitosamente");
-
                     return factura;
                 } else {
                     throw new RuntimeException("El certificador retornó exitoso=false");
@@ -120,8 +113,6 @@ public class CertificacionService {
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Error al certificar: " + e.getMessage());
-
             // 8. Error en certificación
             EstadoFactura estadoError = estadoFacturaRepository
                     .findByCodigoEstado("ERROR")

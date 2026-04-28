@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+
   async headers() {
     return [
       {
@@ -10,15 +11,15 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self'  ",
-              "style-src 'self' ",
+              "script-src 'self'",
+              "style-src 'self'",
               "img-src 'self' data: blob:",
               "font-src 'self'",
               "connect-src 'self'",
-                "object-src 'none'",        
-              "frame-src 'none'",        
-              "worker-src 'self'",       
-              "manifest-src 'self'",  
+              "object-src 'none'",
+              "frame-src 'none'",
+              "worker-src 'self'",
+              "manifest-src 'self'",
               "frame-ancestors 'none'",
             ].join('; ')
           },
@@ -31,7 +32,7 @@ const nextConfig = {
             value: 'nosniff'
           },
           {
-            key: 'Strict-Transport-Security',      // ← NUEVO
+            key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains'
           },
           {

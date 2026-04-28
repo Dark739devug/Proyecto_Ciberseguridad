@@ -39,7 +39,9 @@ export default function CrearAgencia() {
     }
     if (name === 'contrasena') {
       if (!v) return 'Campo obligatorio.';
-      if (v.length < 4) return 'La contraseña debe tener al menos 4 caracteres.';
+      if (v.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+      if (!/[A-Z]/.test(v)) return 'La contraseña debe contener al menos una letra mayúscula.';
+      if (!/[0-9]/.test(v)) return 'La contraseña debe contener al menos un número.';
       return '';
     }
     return '';
@@ -111,7 +113,6 @@ export default function CrearAgencia() {
         } catch (e) {
           // ignore
         }
-        console.error('Registro fallido:', response.status, response.statusText, text);
         setError(errorMsg);
         return;
       }
@@ -123,8 +124,7 @@ export default function CrearAgencia() {
         router.push('/login');
       }, 2500);
     } catch (err) {
-      console.error('Fetch error:', err);
-      setError('Error al conectar con el servidor: ' + (err?.message || String(err)));
+      setError('Error al conectar con el servidor. Intente nuevamente.');
     }
   }
 

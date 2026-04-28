@@ -25,9 +25,7 @@ export default function Login() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem("certiToken");
-      // Opcional: limpiar también el usuario si lo guardaste aparte
-      localStorage.removeItem("certiUserEmail"); 
-      console.log("certiToken antiguo eliminado al cargar la página de Login.");
+      localStorage.removeItem("certiUserEmail");
     }
   }, []);
   // --------------------------------------------------------------------------
@@ -78,10 +76,11 @@ export default function Login() {
           if (token) {
             // Guardar datos del login principal
             localStorage.setItem('accessToken', token);
-            localStorage.setItem('token', token);
             localStorage.setItem('nombre', nombre);
             localStorage.setItem('email', email);
             localStorage.setItem('rol', rol);
+            // Cookie para que el middleware pueda verificar la sesión server-side
+            document.cookie = `accessToken=${token}; path=/; SameSite=Strict`;
             setUserEmail(email); // Guardar email para el modal
 
             // ⚠️ Lógica del Login Secundario
