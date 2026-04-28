@@ -88,13 +88,13 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Agregamos la URL de Vercel y mantenemos localhost por si tú quieres probar desde tu PC
+        // 1. Orígenes permitidos (Aquí mantenemos la ciberseguridad estricta)
         configuration.setAllowedOrigins(Arrays.asList("https://proyecto-ciberseguridad.vercel.app", "http://localhost:3000"));
         
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        // 2. LA MAGIA: Permitir TODOS los métodos y TODAS las cabeceras
+        configuration.setAllowedMethods(Arrays.asList("*")); 
+        configuration.setAllowedHeaders(Arrays.asList("*")); 
         
-        // Ciberseguridad: Necesario para que el frontend pueda enviar tokens y cookies
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
