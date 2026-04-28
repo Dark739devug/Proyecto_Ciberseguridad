@@ -1,5 +1,5 @@
 // 1. Configuración de la URL base
-const BASE_URL = 'http://localhost:9090/api'; 
+const BASE_URL = 'https://facturacion-backend-q96w.onrender.com/api'; // Cambia esto a tu URL real
 
 const ENDPOINTS = {
     // Autenticación
