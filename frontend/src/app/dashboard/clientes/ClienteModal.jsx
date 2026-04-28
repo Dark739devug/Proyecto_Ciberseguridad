@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import styles from './cliente.module.css';
-// 🟢 IMPORTANTE: Importamos las rutas centralizadas
-// Ajusta la ruta relativa si tu estructura de carpetas es diferente
+
 import ENDPOINTS from '../../services/api'; 
 
 function normalizeToken(raw) {
@@ -59,7 +58,7 @@ export default function ClienteModal({ isOpen, onClose, cliente = null, onSucces
         activo: cliente.activo ?? true
       });
     } else {
-      // Reset form cuando se abre para nuevo cliente
+      
       setFormData({
         nit: '',
         razonSocial: '',

@@ -30,7 +30,7 @@ export default function Sidebar() {
       { key: 'usuarios', label: 'Usuarios', href: '/dashboard/usuarios', icon: 'users', roles: ['Admin'] },
     ];
 
-    // Filtrar items según el rol del usuario
+    
     return allItems.filter(item => item.roles.includes(rol));
   }, [rol]);
 
