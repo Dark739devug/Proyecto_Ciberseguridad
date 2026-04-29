@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import styles from './crear-factura-modal.module.css';
 import ENDPOINTS from '../../services/api';
 
-// ================= FUNCIONES AUX =================
+
 function normalizeToken(raw) {
     if (!raw) return null;
     let t = String(raw);
@@ -30,7 +30,7 @@ function getUserIdFromStorage() {
     }
 }
 
-// =================================================
+
 
 export default function CrearFacturaModal({ isOpen, onClose, onSuccess }) {
 
@@ -66,7 +66,7 @@ export default function CrearFacturaModal({ isOpen, onClose, onSuccess }) {
         }
     }
 
-    // ================= ENVÍO =================
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
 
