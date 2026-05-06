@@ -3,8 +3,7 @@
 import React from 'react';
 import Sidebar from './Sidebar';
 import ProtectedRoute from './ProtectedRoute';
-import styles from '../app/dashboard/dashboard.module.css';
-
+import styles from '../dashboard/dashboard.module.css'; 
 
 export default function DashboardClientLayout({ children }) {
   return (
