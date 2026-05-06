@@ -1,14 +1,3 @@
-:root{
-  --azul-encabezado: #4aa3f0;
-  --azul-primario: #1B3C53;
-  --azul-secundario: #1363a8;
-  --fondo: #f6f8fa;
-  --card-bg: #ffffff;
-  --texto-principal: #0b1220;
-  --texto-secundario: #64748b;
-  --error: #dc2626;
-  --exito: #16a34a;
-}
 
 .overlay{
   position: fixed;

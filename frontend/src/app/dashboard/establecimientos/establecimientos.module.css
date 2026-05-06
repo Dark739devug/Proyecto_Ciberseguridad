@@ -1,12 +1,5 @@
 /* Estilos para la vista de establecimientos  */
-:root{
-  --azul-encabezado: #4aa3f0;
-  --azul-encabezado-2: #6fb7ff;
-  --fondo: #f6f8fa;
-  --card-bg: #ffffff;
 
- 
-}
 
 .page{ 
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; 
