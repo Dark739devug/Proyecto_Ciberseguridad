@@ -1,12 +1,5 @@
 /* Dashboard Module CSS */
-:root{
- 
-  --sidebar-hover: rgba(255, 255, 255, 0.1);
-  --sidebar-active: rgba(255, 255, 255, 0.2);
-  --accent: #0b60d6;
-  --muted: #64748b;
-  --dark: #0f1724;
-}
+
 
 /* Layout general */
 .layout{ 

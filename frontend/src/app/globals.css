@@ -3,13 +3,20 @@
 :root {
     --sidebar-bg: #1055C9;
   --sidebar-accent: #0d47a1;
+  --fondo: #f6f8fa;
+  --card-bg: #ffffff;
 
   /* Facturación */
   --azul-encabezado: #4aa3f0;
   --azul-encabezado-2: #6fb7ff;
-  
+
   --background: #ffffff;
   --foreground: #171717;
+  --sidebar-hover: rgba(255, 255, 255, 0.1);
+  --sidebar-active: rgba(255, 255, 255, 0.2);
+  --accent: #0b60d6;
+  --muted: #64748b;
+  --dark: #0f1724;
 }
 
 
