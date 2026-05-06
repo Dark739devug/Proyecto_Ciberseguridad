@@ -2,12 +2,12 @@
   "name": "facturacion_certificacion",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
-    "start": "next start",
-    "lint": "eslint"
-  },
+ "scripts": {
+  "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev --turbopack",
+  "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build",
+  "start": "next start",
+  "lint": "eslint"
+},
   "dependencies": {
     "axios": "^1.13.2",
     "chart.js": "^4.5.1",
@@ -22,6 +22,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "tailwindcss": "^4"

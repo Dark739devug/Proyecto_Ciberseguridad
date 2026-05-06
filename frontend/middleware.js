@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 
+import { NextResponse } from 'next/server';
 
 function decodeJwtPayload(token) {
   try {
@@ -17,7 +17,6 @@ function isTokenValid(token) {
   if (!token) return false;
   const payload = decodeJwtPayload(token);
   if (!payload) return false;
-  // Comprobar expiración (exp está en segundos Unix)
   if (payload.exp && Date.now() / 1000 > payload.exp) return false;
   return true;
 }
@@ -25,19 +24,16 @@ function isTokenValid(token) {
 export function middleware(request) {
   const pathname = request.nextUrl.pathname;
 
-
-  const isPublicRoute = pathname === '/login' || 
-                        pathname === '/registro' || 
-                        pathname === '/';
-
-
-  if (isPublicRoute) {
-    return NextResponse.next();
-  }
-
- 
   if (pathname.startsWith('/dashboard')) {
-    return NextResponse.next();
+    
+    const token = request.cookies.get('accessToken')?.value;
+
+    if (!isTokenValid(token)) {
+      
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.set('accessToken', '', { maxAge: 0, path: '/' });
+      return response;
+    }
   }
 
   return NextResponse.next();
