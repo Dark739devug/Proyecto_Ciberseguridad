@@ -1,7 +1,6 @@
 /* Dashboard Module CSS */
 :root{
-  --sidebar-bg: #1055C9;
-  --sidebar-accent: #0d47a1;
+ 
   --sidebar-hover: rgba(255, 255, 255, 0.1);
   --sidebar-active: rgba(255, 255, 255, 0.2);
   --accent: #0b60d6;
