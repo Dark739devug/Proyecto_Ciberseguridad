@@ -19,29 +19,30 @@ export default function Login() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // ✅ Si ya tiene sesión, redirigir al dashboard
       const token = localStorage.getItem('accessToken');
       if (token) {
         router.replace('/dashboard');
         return;
       }
-
-      // ✅ Solo limpiar tokens de certificación
       localStorage.removeItem('certiToken');
       localStorage.removeItem('certiUserEmail');
     }
   }, []);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSuccessfulLogin = (nombre) => {
     toast.success(`¡Bienvenido ${nombre}!`, { position: 'top-center' });
     router.push('/dashboard');
+  };
+
+  // ✅ Detecta si estamos en HTTPS para agregar Secure
+  const setCookie = (token) => {
+    const isSecure = window.location.protocol === 'https:';
+    const secureFlag = isSecure ? '; Secure' : '';
+    document.cookie = `accessToken=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict${secureFlag}`;
   };
 
   const handleSubmit = async (e) => {
@@ -75,8 +76,8 @@ export default function Login() {
             localStorage.setItem('email', email);
             localStorage.setItem('rol', rol);
 
-            // ✅ Cookie con max-age para que el middleware la lea
-            document.cookie = `accessToken=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
+            // ✅ Usa la función que detecta HTTPS automáticamente
+            setCookie(token);
 
             setUserEmail(email);
 
@@ -92,7 +93,8 @@ export default function Login() {
           token = raw.trim();
           if (token) {
             localStorage.setItem('accessToken', token);
-            document.cookie = `accessToken=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
+            // ✅ También aquí
+            setCookie(token);
             handleSuccessfulLogin('Usuario');
             return;
           }
