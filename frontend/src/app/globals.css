@@ -2,6 +2,16 @@
 
 :root {
 
+   --azul-encabezado: #4aa3f0;
+  --azul-encabezado-2: #6fb7ff;
+  --fondo: #f6f8fa;
+  --card-bg: #ffffff;
+
+  --azul-primario: #1B3C53;
+  --azul-secundario: #1363a8;
+  --texto-principal: #0b1220;
+  --texto-secundario: #64748b;
+
   --bg-start: #0f172a;
   --bg-end: #1d5397;
   --card-bg: rgba(255,255,255,0.98);
@@ -13,7 +23,12 @@
   --shadow-lg: 0 18px 40px rgba(10, 20, 40, 0.25);
   --shadow-sm: 0 8px 18px rgba(10, 20, 40, 0.08);
   --glass-border: rgba(255,255,255,0.06);
-  
+
+  --azul-primario: #1B3C53;
+  --azul-secundario: #1363a8;
+  --texto-principal: #0b1220;
+  --texto-secundario: #64748b;
+
 
   --azul-encabezado: #4aa3f0;
   --azul-encabezado-2: #6fb7ff;

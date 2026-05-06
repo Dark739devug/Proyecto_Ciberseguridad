@@ -1,9 +1,4 @@
-:root{
-  --azul-primario: #1B3C53;
-  --azul-secundario: #1363a8;
-  --texto-principal: #0b1220;
-  --texto-secundario: #64748b;
-}
+
 
 .overlay{
   position: fixed;
