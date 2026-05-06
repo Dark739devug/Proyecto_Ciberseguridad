@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 
-/**
- * Decodifica el payload de un JWT sin verificar la firma.
- * La verificación de firma se realiza en el backend.
- * Aquí solo comprobamos si el token existe y no ha expirado.
- */
+
 function decodeJwtPayload(token) {
   try {
     const parts = token.split('.');
