@@ -1,25 +1,23 @@
 'use client';
 
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function ProtectedRoute({ children }) {
   const router = useRouter();
-  const [authorized, setAuthorized] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
-    const hasCookie = document.cookie.includes('accessToken');
+    const token = localStorage.getItem('accessToken');
 
-    if (!hasCookie) {
-      router.replace('/login');
-    } else {
-      setAuthorized(true);
+    if (!token && pathname.startsWith('/dashboard')) {
+      router.push('/login');
     }
-  }, []);
 
-  if (!authorized) return null;
+    if (token && (pathname === '/login' || pathname === '/registro')) {
+      router.push('/dashboard');
+    }
+  }, [router, pathname]); 
 
-  return children;
-
+  return <>{children}</>;
 }
