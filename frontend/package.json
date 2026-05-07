@@ -2,12 +2,12 @@
   "name": "facturacion_certificacion",
   "version": "0.1.0",
   "private": true,
- "scripts": {
-  "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev --turbopack",
-  "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build",
-  "start": "next start",
-  "lint": "eslint"
-},
+  "scripts": {
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev --turbopack",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
   "dependencies": {
     "axios": "^1.13.2",
     "chart.js": "^4.5.1",

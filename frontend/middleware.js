@@ -27,7 +27,7 @@ function isTokenValid(token) {
     return false;
   }
 
->>>>>>> Stashed changes
+
   return true;
 }
 
@@ -41,7 +41,7 @@ export function middleware(request) {
       
       const response = NextResponse.redirect(new URL('/login', request.url));
       response.cookies.delete('accessToken');
->>>>>>> Stashed changes
+
       return response;
     }
   }
