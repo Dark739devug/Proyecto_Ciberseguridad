@@ -2,64 +2,33 @@
 import React, { useState, useEffect } from 'react'; // 👈 IMPORTANTE: Añadir useEffect
 import { useRouter } from 'next/navigation';
 import styles from './login.module.css';
-import { ToastContainer, toast } from 'react-toastify';
-import ENDPOINTS from '../services/api'; 
-import CertiLoginModal from './CertiLoginModal'; 
+import apiCerti from '../services/API_Certi_API';
 
-export default function Login() {
-  const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showCertiModal, setShowCertiModal] = useState(false); 
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
-  const [userEmail, setUserEmail] = useState('');
-
-  // --------------------------------------------------------------------------
-  // 💡 CORRECCIÓN CLAVE: Limpiar el certiToken al cargar la página de Login.
-  // Esto asegura que el modal se muestre en cada nuevo inicio de sesión,
-  // incluso si el usuario no cerró la sesión del certificador manualmente.
-  // --------------------------------------------------------------------------
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem("certiToken");
-      // Opcional: limpiar también el usuario si lo guardaste aparte
-      localStorage.removeItem("certiUserEmail"); 
-      console.log("certiToken antiguo eliminado al cargar la página de Login.");
-    }
-  }, []);
-  // --------------------------------------------------------------------------
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
+export default function CertiLoginModal({
+    isOpen,
+    onClose,
+    onSuccess,
+    initialEmail = ''
+}) {
+    const [formData, setFormData] = useState({
+        username: '',
+        password: ''
     });
-  };
 
-  /**
-   * Redirección final al dashboard
-   */
-  const handleSuccessfulLogin = (nombre) => {
-    toast.success(`¡Bienvenido ${nombre}!`, { position: 'top-center' });
-    router.push('/dashboard');
-  };
+    const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
-  /**
-   * Lógica de Inicio de Sesión Principal (API 1)
-   */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      const response = await fetch(ENDPOINTS.login, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email, password: formData.password }),
-      });
+    // Reset o precarga cuando abre el modal
+    useEffect(() => {
+        if (isOpen) {
+            setFormData({
+                username: initialEmail || '',
+                password: ''
+            });
+            setShowPassword(false);
+        }
+    }, [isOpen, initialEmail]);
+>>>>>>> Stashed changes
 
       const raw = await response.text();
       let token = null;
@@ -84,21 +53,57 @@ export default function Login() {
             localStorage.setItem('rol', rol);
             setUserEmail(email); // Guardar email para el modal
 
-            // ⚠️ Lógica del Login Secundario
-            const certiToken = localStorage.getItem('certiToken');
-            
-            if (!certiToken) {
-              // Si no hay token secundario (porque lo limpiamos arriba), mostrar el modal
-              setShowCertiModal(true);
-            } else {
-              // Esto solo ocurriría si el usuario refresca la página de login justo después de loguearse
-              handleSuccessfulLogin(nombre);
+
+    const handleCertiLogin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            const payload = {
+                username: formData.username,
+                password: formData.password
+            };
+
+            const response = await apiCerti.post('/auth/login', payload);
+
+            const parsed = response.data;
+            const token =
+                parsed.token ||
+                parsed.accessToken ||
+                parsed.jwt ||
+                parsed.access_token;
+
+            if (!token) {
+                throw new Error("No se recibió el token de certificación.");
             }
-            return;
-          }
-        } catch (e) {
-          // No JSON, trata raw como token directamente (caso raro)
-          token = raw.trim();
+
+            localStorage.setItem('certiToken', token);
+            localStorage.setItem('certiUserEmail', formData.username);
+
+            toast.success("Credenciales guardadas correctamente", {
+                position: 'top-center'
+            });
+
+            onSuccess(token);
+
+        } catch (error) {
+            const responseData = error.response?.data || {};
+
+            let errorMsg =
+                responseData.message ||
+                responseData.error ||
+                'Credenciales incorrectas. Verifica usuario y contraseña.';
+
+            if (error.message.includes('401')) {
+                errorMsg = 'Error 401: Credenciales inválidas.';
+            }
+
+            toast.error(errorMsg, { position: 'top-center' });
+            console.error('Error login certificador:', error.response || error);
+
+        } finally {
+            setLoading(false);
+>>>>>>> Stashed changes
         }
       } 
       
@@ -139,36 +144,71 @@ export default function Login() {
   };
 
 
-  return (
-    <div className={styles.loginContainer}>
-      <div className={styles.logoContainer}>
-        <img src="/factura.png" alt="Logo" className={styles.logo} />
-      </div>
+    return (
+        <div className={styles.overlay}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
 
-      <form onSubmit={handleSubmit} className={styles.formContainer}>
-        <h2 className={styles.title}>Iniciar Sesión</h2>
-        <div className={styles.inputContainer}> 
-          <svg xmlns="http://www.w3.org/2000/svg" 
-            width="24" 
-            height="24" 
-            viewBox="0 0 24 24" 
-            fill="currentColor" 
-          >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-            <path d="M12 2a5 5 0 1 1 -5 5l.005 -.217a5 5 0 0 1 4.995 -4.783z" />
-            <path d="M14 14a5 5 0 0 1 5 5v1a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-1a5 5 0 0 1 5 -5h4z" />
-          </svg>
-              
-          <input
-            type="email"
-            name="email"
-            placeholder="Correo Electrónico"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            className={styles.input}
-            disabled={loading}
-          />
+                <button
+                    className={styles.modalCloseButton}
+                    onClick={onClose}
+                    disabled={loading}
+                >
+                    &times;
+                </button>
+
+                <div className={styles.header}>
+                    <h2 className={styles.formTitle}>Acceso Certificador</h2>
+                    <p className={styles.formSubtitle}>
+                        Ingresa usuario y contraseña para obtener token
+                    </p>
+                </div>
+
+                <form
+                    onSubmit={handleCertiLogin}
+                    className={styles.formContainer}
+                >
+
+                    <div className={styles.inputContainer}>
+                        <input
+                            type="text"
+                            name="username"
+                            placeholder="Usuario"
+                            value={formData.username}
+                            onChange={handleChange}
+                            required
+                            disabled={loading}
+                            className={styles.input}
+                        />
+                    </div>
+
+                    <div className={styles.inputContainer}>
+                        <input
+                            type={showPassword ? 'text' : 'password'}
+                            name="password"
+                            placeholder="Contraseña"
+                            value={formData.password}
+                            onChange={handleChange}
+                            required
+                            disabled={loading}
+                            className={styles.input}
+                        />
+
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            disabled={loading}
+                        >
+                            {showPassword ? '🙈' : '👁️'}
+                        </button>
+                    </div>
+
+                    <button type="submit" disabled={loading}>
+                        {loading ? 'Obteniendo Token...' : 'Obtener Token'}
+                    </button>
+
+                </form>
+            </div>
+>>>>>>> Stashed changes
         </div>
 
         <div className={styles.inputContainer}>

@@ -4,18 +4,17 @@ import { useRouter } from 'next/navigation';
 import styles from './login.module.css';
 import { ToastContainer, toast } from 'react-toastify';
 import ENDPOINTS from '../services/api'; 
-import CertiLoginModal from './CertiLoginModal'; 
 
 export default function Login() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [showCertiModal, setShowCertiModal] = useState(false); 
+ 
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -24,8 +23,8 @@ export default function Login() {
         router.replace('/dashboard');
         return;
       }
-      localStorage.removeItem('certiToken');
-      localStorage.removeItem('certiUserEmail');
+
+
     }
   }, []);
 
@@ -38,11 +37,11 @@ export default function Login() {
     router.push('/dashboard');
   };
 
-  // ✅ Detecta si estamos en HTTPS para agregar Secure
   const setCookie = (token) => {
     const isSecure = window.location.protocol === 'https:';
     const secureFlag = isSecure ? '; Secure' : '';
-    document.cookie = `accessToken=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict${secureFlag}`;
+    document.cookie = `accessToken=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax${secureFlag}`;
+
   };
 
   const handleSubmit = async (e) => {
@@ -76,24 +75,17 @@ export default function Login() {
             localStorage.setItem('email', email);
             localStorage.setItem('rol', rol);
 
-            // ✅ Usa la función que detecta HTTPS automáticamente
+
             setCookie(token);
+            handleSuccessfulLogin(nombre);
 
-            setUserEmail(email);
-
-            const certiToken = localStorage.getItem('certiToken');
-            if (!certiToken) {
-              setShowCertiModal(true);
-            } else {
-              handleSuccessfulLogin(nombre);
-            }
             return;
           }
         } catch (e) {
           token = raw.trim();
           if (token) {
             localStorage.setItem('accessToken', token);
-            // ✅ También aquí
+
             setCookie(token);
             handleSuccessfulLogin('Usuario');
             return;
@@ -116,19 +108,6 @@ export default function Login() {
       setLoading(false);
     }
   };
-
-  const handleCertiSuccess = () => {
-    setShowCertiModal(false);
-    const nombre = localStorage.getItem('nombre') || 'Usuario';
-    handleSuccessfulLogin(nombre);
-  };
-  
-  const handleCertiClose = () => {
-    setShowCertiModal(false);
-    const nombre = localStorage.getItem('nombre') || 'Usuario';
-    handleSuccessfulLogin(nombre); 
-  };
-
   return (
     <div className={styles.loginContainer}>
       <div className={styles.logoContainer}>
@@ -136,7 +115,7 @@ export default function Login() {
       </div>
 
       <form onSubmit={handleSubmit} className={styles.formContainer}>
-        <h2 className={styles.title}>Iniciar Sesión</h2>
+
         <div className={styles.inputContainer}> 
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -198,17 +177,12 @@ export default function Login() {
         <button type="submit" className={styles.button} disabled={loading}>
           {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
         </button>
-        <div className={styles.linksContainer}>
-          <a href="/registro" className={styles.link}>¿Crear cuenta?</a>
-        </div>
-      </form>
+
       
-      <CertiLoginModal
-        isOpen={showCertiModal}
-        onClose={handleCertiClose} 
-        onSuccess={handleCertiSuccess} 
-        initialEmail={userEmail}
-      />
+
+
+        
+      </form>
       
       <ToastContainer position="top-center" />
     </div>
