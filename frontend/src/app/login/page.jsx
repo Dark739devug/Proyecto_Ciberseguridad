@@ -8,8 +8,6 @@ import ENDPOINTS from '../services/api';
 export default function Login() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
- 
-
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -23,8 +21,6 @@ export default function Login() {
         router.replace('/dashboard');
         return;
       }
-
-
     }
   }, []);
 
@@ -41,7 +37,6 @@ export default function Login() {
     const isSecure = window.location.protocol === 'https:';
     const secureFlag = isSecure ? '; Secure' : '';
     document.cookie = `accessToken=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax${secureFlag}`;
-
   };
 
   const handleSubmit = async (e) => {
@@ -74,18 +69,14 @@ export default function Login() {
             localStorage.setItem('nombre', nombre);
             localStorage.setItem('email', email);
             localStorage.setItem('rol', rol);
-
-
             setCookie(token);
             handleSuccessfulLogin(nombre);
-
             return;
           }
         } catch (e) {
           token = raw.trim();
           if (token) {
             localStorage.setItem('accessToken', token);
-
             setCookie(token);
             handleSuccessfulLogin('Usuario');
             return;
@@ -108,6 +99,7 @@ export default function Login() {
       setLoading(false);
     }
   };
+
   return (
     <div className={styles.loginContainer}>
       <div className={styles.logoContainer}>
@@ -115,6 +107,9 @@ export default function Login() {
       </div>
 
       <form onSubmit={handleSubmit} className={styles.formContainer}>
+        <h2 style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.8rem', marginBottom: '1.5rem' }}>
+          Iniciar Sesión
+        </h2>
 
         <div className={styles.inputContainer}> 
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -177,11 +172,6 @@ export default function Login() {
         <button type="submit" className={styles.button} disabled={loading}>
           {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
         </button>
-
-      
-
-
-        
       </form>
       
       <ToastContainer position="top-center" />
